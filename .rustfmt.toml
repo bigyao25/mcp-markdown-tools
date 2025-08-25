@@ -1,0 +1,10 @@
+# unstable_features = true
+max_width = 120              # 设置最大行宽为 100 个字符
+tab_spaces = 2               # 设置缩进宽度为 4 个空格
+edition = "2021"             # 设置 Rust 版本（根据实际项目版本进行调整）
+style_edition = "2021"
+use_small_heuristics = "Max" # 设置换行策略
+newline_style = "Auto"       # 设置换行符风格，根据平台自动选择
+
+reorder_modules = true # 排序 mod 
+reorder_imports = true # 排序 imports
