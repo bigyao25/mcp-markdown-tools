@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::config::{GenerateChapterConfig, RemoveChapterConfig};
 use crate::mst::NumberingConfig;
 use crate::numbering::NumberingGenerator;
 use crate::parser::MarkdownParser;
@@ -11,27 +12,25 @@ pub struct MarkdownToolsImpl;
 
 impl MarkdownToolsImpl {
   pub async fn generate_chapter_number_impl(
-    file_path: &str,
-    ignore_h1: bool,
-    use_chinese_number: bool,
-    use_arabic_number_for_sublevel: bool,
-    save_as_new_file: bool,
-    new_file_name: Option<&str>,
+    config: GenerateChapterConfig,
     default_suffix: &str,
   ) -> Result<CallToolResult, McpError> {
-    let new_file_path = Self::generate_new_filename(file_path, new_file_name, default_suffix);
+    let new_file_path = Self::generate_new_filename(&config.file_path, config.new_file_name.as_deref(), default_suffix);
 
     execute_markdown_operation(
-      file_path,
+      &config.file_path,
       |content| {
-        // 使用新的 MST 架构
         let parser = MarkdownParser::new().map_err(|e| format!("创建解析器失败: {}", e))?;
 
         let mut mst = parser.parse(content).map_err(|e| format!("解析 Markdown 失败: {}", e))?;
 
-        let config = NumberingConfig { ignore_h1, use_chinese_number, use_arabic_number_for_sublevel };
+        let numbering_config = NumberingConfig {
+          ignore_h1: config.ignore_h1,
+          use_chinese_number: config.use_chinese_number,
+          use_arabic_number_for_sublevel: config.use_arabic_number_for_sublevel,
+        };
 
-        let generator = NumberingGenerator::new(config);
+        let generator = NumberingGenerator::new(numbering_config);
         generator.generate_numbering(&mut mst);
 
         let renderer = MarkdownRenderer::new();
@@ -39,24 +38,21 @@ impl MarkdownToolsImpl {
 
         Ok(result)
       },
-      format!("成功为文件 {} 生成章节编号", file_path),
-      save_as_new_file,
-      new_file_path.as_str(),
+      format!("成功为文件 {} 生成章节编号", config.file_path),
+      config.save_as_new_file,
+      &new_file_path,
     )
   }
 
   pub async fn remove_all_chapter_numbers_impl(
-    file_path: &str,
-    save_as_new_file: bool,
-    new_file_name: Option<&str>,
+    config: RemoveChapterConfig,
     default_suffix: &str,
   ) -> Result<CallToolResult, McpError> {
-    let new_file_path = Self::generate_new_filename(file_path, new_file_name, default_suffix);
+    let new_file_path = Self::generate_new_filename(&config.file_path, config.new_file_name.as_deref(), default_suffix);
 
     execute_markdown_operation(
-      file_path,
+      &config.file_path,
       |content| {
-        // 使用新的 MST 架构
         let parser = MarkdownParser::new().map_err(|e| format!("创建解析器失败: {}", e))?;
 
         let mst = parser.parse(content).map_err(|e| format!("解析 Markdown 失败: {}", e))?;
@@ -66,9 +62,9 @@ impl MarkdownToolsImpl {
 
         Ok(result)
       },
-      format!("成功清除文件 {} 的所有章节编号", file_path),
-      save_as_new_file, // remove_all_chapter_numbers 不需要另存为新文件
-      new_file_path.as_str(),
+      format!("成功清除文件 {} 的所有章节编号", config.file_path),
+      config.save_as_new_file,
+      &new_file_path,
     )
   }
 

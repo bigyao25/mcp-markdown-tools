@@ -1,51 +1,44 @@
+use crate::error::{MarkdownError, Result};
 use rmcp::{model::*, ErrorData as McpError};
 use std::fs;
 use std::path::Path;
 
 /// 验证文件路径并检查是否为有效的 Markdown 文件
-pub fn validate_markdown_file(file_path: &str) -> Result<(), String> {
+pub fn validate_markdown_file(file_path: &str) -> Result<()> {
   let path = Path::new(file_path);
 
-  // 检查文件是否存在
   if !path.exists() {
-    return Err(format!("文件不存在: {}", file_path));
+    return Err(MarkdownError::ValidationError(format!("文件不存在: {}", file_path)));
   }
 
-  // 检查是否为markdown文件
   if let Some(extension) = path.extension() {
     if extension != "md" && extension != "markdown" {
-      return Err("文件必须是Markdown格式 (.md 或 .markdown)".to_string());
+      return Err(MarkdownError::ValidationError("文件必须是Markdown格式 (.md 或 .markdown)".to_string()));
     }
   } else {
-    return Err("文件必须有扩展名".to_string());
+    return Err(MarkdownError::ValidationError("文件必须有扩展名".to_string()));
   }
 
   Ok(())
 }
 
 /// 读取文件内容
-pub fn read_file_content(file_path: &str) -> Result<String, String> {
-  match fs::read_to_string(file_path) {
-    Ok(content) => Ok(content),
-    Err(e) => Err(format!("读取文件失败: {}", e)),
-  }
+pub fn read_file_content(file_path: &str) -> Result<String> {
+  fs::read_to_string(file_path).map_err(|e| MarkdownError::FileError(format!("读取文件失败: {}", e)))
 }
 
 /// 写入文件内容
-pub fn write_file_content(file_path: &str, content: &str) -> Result<(), String> {
-  match fs::write(file_path, content) {
-    Ok(_) => Ok(()),
-    Err(e) => Err(format!("写入文件失败: {}", e)),
-  }
+pub fn write_file_content(file_path: &str, content: &str) -> Result<()> {
+  fs::write(file_path, content).map_err(|e| MarkdownError::FileError(format!("写入文件失败: {}", e)))
 }
 
 /// 创建成功的工具调用结果
-pub fn create_success_result(message: String) -> Result<CallToolResult, McpError> {
+pub fn create_success_result(message: String) -> std::result::Result<CallToolResult, McpError> {
   Ok(CallToolResult::success(vec![Content::text(message)]))
 }
 
 /// 创建错误的工具调用结果
-pub fn create_error_result(error_message: String) -> Result<CallToolResult, McpError> {
+pub fn create_error_result(error_message: String) -> std::result::Result<CallToolResult, McpError> {
   Ok(CallToolResult::error(vec![Content::text(error_message)]))
 }
 
@@ -56,42 +49,24 @@ pub fn execute_markdown_operation<F>(
   success_message: String,
   save_as_new_file: bool,
   new_file_path: &str,
-) -> Result<CallToolResult, McpError>
+) -> std::result::Result<CallToolResult, McpError>
 where
-  F: FnOnce(&str) -> Result<String, String>,
+  F: FnOnce(&str) -> std::result::Result<String, String>,
 {
-  // 验证文件
-  if let Err(error) = validate_markdown_file(file_path) {
-    return create_error_result(error);
-  }
+  let result = (|| -> Result<CallToolResult> {
+    validate_markdown_file(file_path)?;
 
-  // 读取原文件内容
-  let content = match read_file_content(file_path) {
-    Ok(content) => content,
-    Err(error) => return create_error_result(error),
-  };
+    let content = read_file_content(file_path)?;
 
-  // 执行操作
-  let new_content = match operation(&content) {
-    Ok(new_content) => new_content,
-    Err(error) => return create_error_result(error),
-  };
+    let new_content = operation(&content).map_err(|e| MarkdownError::ParseError(e))?;
 
-  // 确定输出文件路径
-  let output_path = if save_as_new_file {
-    // let new_path = generate_new_filename(file_path, new_file_suffix);
-    // new_path
-    new_file_path
-  } else {
-    file_path
-  };
+    let output_path = if save_as_new_file { new_file_path } else { file_path };
 
-  // 写入文件
-  if let Err(error) = write_file_content(&output_path, &new_content) {
-    return create_error_result(error);
-  }
+    write_file_content(output_path, &new_content)?;
 
-  let final_message = format!("{}, 文件保存为: {}", success_message, output_path);
+    let final_message = format!("{}, 文件保存为: {}", success_message, output_path);
+    Ok(CallToolResult::success(vec![Content::text(final_message)]))
+  })();
 
-  create_success_result(final_message)
+  result.map_err(|e| e.into())
 }

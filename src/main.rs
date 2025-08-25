@@ -7,6 +7,8 @@ use rmcp::{
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+mod config;
+mod error;
 mod mst;
 mod numbering;
 mod parser;
@@ -14,6 +16,7 @@ mod renderer;
 mod tools;
 mod utils;
 
+use config::{GenerateChapterConfig, RemoveChapterConfig};
 use tools::MarkdownToolsImpl;
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -156,70 +159,12 @@ impl ServerHandler for MarkdownTools {
   ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
       "generate_chapter_number" => {
-        let file_path = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("file_path"))
-          .and_then(|v| v.as_str())
-          .ok_or_else(|| McpError::invalid_params("Missing file_path parameter", None))?;
-
-        let ignore_h1 =
-          request.arguments.as_ref().and_then(|args| args.get("ignore_h1")).and_then(|v| v.as_bool()).unwrap_or(false);
-
-        let use_chinese_number = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("use_chinese_number"))
-          .and_then(|v| v.as_bool())
-          .unwrap_or(false);
-
-        let use_arabic_number_for_sublevel = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("use_arabic_number_for_sublevel"))
-          .and_then(|v| v.as_bool())
-          .unwrap_or(true);
-
-        let save_as_new_file = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("save_as_new_file"))
-          .and_then(|v| v.as_bool())
-          .unwrap_or(false);
-
-        let new_file_name =
-          request.arguments.as_ref().and_then(|args| args.get("new_file_name")).and_then(|v| v.as_str());
-
-        MarkdownToolsImpl::generate_chapter_number_impl(
-          file_path,
-          ignore_h1,
-          use_chinese_number,
-          use_arabic_number_for_sublevel,
-          save_as_new_file,
-          new_file_name,
-          "numed",
-        )
-        .await
+        let config = GenerateChapterConfig::from_args(request.arguments.as_ref())?;
+        MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await
       }
       "remove_all_chapter_numbers" => {
-        let file_path = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("file_path"))
-          .and_then(|v| v.as_str())
-          .ok_or_else(|| McpError::invalid_params("Missing file_path parameter", None))?;
-
-        let save_as_new_file = request
-          .arguments
-          .as_ref()
-          .and_then(|args| args.get("save_as_new_file"))
-          .and_then(|v| v.as_bool())
-          .unwrap_or(false);
-
-        let new_file_name =
-          request.arguments.as_ref().and_then(|args| args.get("new_file_name")).and_then(|v| v.as_str());
-
-        MarkdownToolsImpl::remove_all_chapter_numbers_impl(file_path, save_as_new_file, new_file_name, "unnumed").await
+        let config = RemoveChapterConfig::from_args(request.arguments.as_ref())?;
+        MarkdownToolsImpl::remove_all_chapter_numbers_impl(config, "unnumed").await
       }
       _ => Err(McpError::method_not_found::<CallToolRequestMethod>()),
     }
