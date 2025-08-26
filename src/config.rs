@@ -18,6 +18,11 @@ pub struct RemoveChapterConfig {
   pub new_file_name: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct CheckHeadingConfig {
+  pub file_path: String,
+}
+
 impl GenerateChapterConfig {
   pub fn from_args(args: Option<&Map<String, Value>>) -> Result<Self> {
     let args = args.ok_or_else(|| MarkdownError::ConfigError("缺少参数".to_string()))?;
@@ -65,5 +70,19 @@ impl RemoveChapterConfig {
     let new_file_name = args.get("new_file_name").and_then(|v| v.as_str()).map(|s| s.to_string());
 
     Ok(Self { file_path, save_as_new_file, new_file_name })
+  }
+}
+
+impl CheckHeadingConfig {
+  pub fn from_args(args: Option<&Map<String, Value>>) -> Result<Self> {
+    let args = args.ok_or_else(|| MarkdownError::ConfigError("缺少参数".to_string()))?;
+
+    let file_path = args
+      .get("file_path")
+      .and_then(|v| v.as_str())
+      .ok_or_else(|| MarkdownError::ConfigError("缺少 file_path 参数".to_string()))?
+      .to_string();
+
+    Ok(Self { file_path })
   }
 }

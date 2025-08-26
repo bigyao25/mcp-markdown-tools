@@ -16,7 +16,7 @@ mod renderer;
 mod tools;
 mod utils;
 
-use config::{GenerateChapterConfig, RemoveChapterConfig};
+use config::{CheckHeadingConfig, GenerateChapterConfig, RemoveChapterConfig};
 use tools::MarkdownToolsImpl;
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -45,6 +45,49 @@ impl ServerHandler for MarkdownTools {
     _context: RequestContext<RoleServer>,
   ) -> Result<ListToolsResult, McpError> {
     let tools = vec![
+            Tool::new(
+                "check_heading",
+                r#"验证 Markdown 文档标题行的格式规范性和层级结构的正确性。
+
+验证规则：
+1. 标题格式规范：
+   - 标题行必须以1-6个#符号开头（称为标题符/Heading token）
+   - #符号前不能有空格或其他字符
+   - #符号后必须有且仅有一个空格，然后是标题内容
+   - #符号的数量决定标题级别（1-6级）
+
+2. 层级结构规范：
+   - 允许文档开头有非标题内容（如前言、说明等）
+   - 文档中第一个标题的级别决定了文档的起始级别
+   - 标题级别必须连续，不允许跳级：
+     * 允许：同级标题（H2→H2）、下一级标题（H2→H3）、回到任意上级标题（H3→H2、H3→H1）
+     * 不允许：跳级（H1→H3、H2→H4等，即跳过中间级别）
+
+3. 验证范围：
+   - 只验证标题行（以#开头的行），忽略其他内容行
+   - 支持文档开头有非标题内容
+
+返回结果：
+- 验证通过：返回成功信息和标题结构统计
+- 验证失败：返回详细的错误报告，包括：
+  * 错误类型（格式错误/层级跳级）
+  * 具体错误行号和内容"#,
+                std::sync::Arc::new(
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": {
+                            "file_path": {
+                                "type": "string",
+                                "description": "Markdown文档的文件路径"
+                            }
+                        },
+                        "required": ["file_path"]
+                    })
+                    .as_object()
+                    .unwrap()
+                    .clone(),
+                ),
+            ),
             Tool::new(
                 "generate_chapter_number",
                 r#"为 Markdown 文档所有的标题行(Head line)创建编号。
@@ -158,6 +201,10 @@ impl ServerHandler for MarkdownTools {
     _context: RequestContext<RoleServer>,
   ) -> Result<CallToolResult, McpError> {
     match request.name.as_ref() {
+      "check_heading" => {
+        let config = CheckHeadingConfig::from_args(request.arguments.as_ref())?;
+        MarkdownToolsImpl::check_heading_impl(config).await
+      }
       "generate_chapter_number" => {
         let config = GenerateChapterConfig::from_args(request.arguments.as_ref())?;
         MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await
