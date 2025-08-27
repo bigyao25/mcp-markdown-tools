@@ -60,6 +60,30 @@ Removes all numbering from heading lines in a Markdown document, including both 
 - save_as_new_file: Whether to save as a new file after editing; when false, the original file will be overwritten
 - new_file_name: New file name, excluding the extension (.md). Takes effect when save_as_new_file=true
 
+## Release
+
+1. Append new version info into CHANGELOG.md
+
+  ```markdown
+  ## [v0.1.0] - 2025-01-01
+
+  ### Added
+
+  - 新功能A
+  - 新功能B
+
+  ### Fixed
+
+  - 修复问题C
+  ```
+
+2. Create and push new tag
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## References
 
 - Markdown Syntax: <https://www.markdownlang.com/cheatsheet/>

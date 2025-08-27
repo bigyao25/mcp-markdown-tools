@@ -1,5 +1,5 @@
 [package]
-name = "rung-mcp-markdown-tools"
+name = "mcp-markdown-tools"
 version = "0.1.0"
 edition = "2024"
 

@@ -60,6 +60,31 @@ TODO...
 - save_as_new_file：编辑后，是否另存为新文件，为false时将覆盖原文件。
 - new_file_name：新文件名，不包括扩展名(.md)。save_as_new_file=true 时生效。
 
+## 发布
+
+1. 更新 CHANGELOG.md：
+  增加版本信息。
+
+  ```markdown
+  ## [v0.1.0] - 2025-01-01
+
+  ### Added
+
+  - 新功能A
+  - 新功能B
+
+  ### Fixed
+
+  - 修复问题C
+  ```
+
+2. 创建并推送版本标签：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## 参考
 
 - Markdown 语法：<https://www.markdownlang.com/cheatsheet/>
