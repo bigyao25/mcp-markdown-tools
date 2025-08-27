@@ -146,20 +146,15 @@ jobs:
             echo "Binary releases for multiple platforms and architectures." >> release_notes.txt
           fi
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          release_name: Release ${{ steps.version.outputs.VERSION }}
-          body_path: release_notes.txt
-          draft: false
-          prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
-
-      - name: Upload Release Assets
+      - name: Create Release and Upload Assets
         run: |
+          # 创建 Release
+          gh release create ${{ steps.version.outputs.VERSION }} \
+            --title "Release ${{ steps.version.outputs.VERSION }}" \
+            --notes-file release_notes.txt \
+            ${{ contains(steps.version.outputs.VERSION, '-') && '--prerelease' || '' }}
+          
+          # 上传所有文件
           for dir in artifacts/*/; do
             for file in "$dir"*; do
               if [ -f "$file" ]; then

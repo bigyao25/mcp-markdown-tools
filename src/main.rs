@@ -78,7 +78,7 @@ impl ServerHandler for MarkdownTools {
                         "properties": {
                             "file_path": {
                                 "type": "string",
-                                "description": "Markdown文档的文件路径"
+                                "description": "Markdown 文档的文件路径"
                             }
                         },
                         "required": ["file_path"]
@@ -88,6 +88,32 @@ impl ServerHandler for MarkdownTools {
                     .clone(),
                 ),
             ),
+//             Tool::new(
+//                 "check_chapter_numbers",
+//                 r#"验证 Markdown 文档标题行(Head line)的编号。
+
+// 格式要求：
+// 1. 文档编号只能是以下三种编号格式中的一种：
+// - 纯数字，例如：1. 1.1. 1.1.1. 1.2. 2. 2.1.
+// - 纯中文，例如：一、 一、一、 一、一、一、 一、二、 二、 二、一、
+// - 一级编号为中文，二级及以下编号为数字，例如：一、 1. 1.1. 1.2. 2. 二、 1. 1.1. 2. 2.1.
+// 2. 编号必须连贯，不能跳号，例如(跳号)： 1. 1.1. 1.3. 2."#,
+//                 std::sync::Arc::new(
+//                     serde_json::json!({
+//                         "type": "object",
+//                         "properties": {
+//                             "file_path": {
+//                                 "type": "string",
+//                                 "description": "Markdown 文档的文件路径"
+//                             }
+//                         },
+//                         "required": ["file_path"]
+//                     })
+//                     .as_object()
+//                     .unwrap()
+//                     .clone(),
+//                 ),
+//             ),
             Tool::new(
                 "generate_chapter_number",
                 r#"为 Markdown 文档所有的标题行(Head line)创建编号。
@@ -170,7 +196,7 @@ impl ServerHandler for MarkdownTools {
                         "properties": {
                             "file_path": {
                                 "type": "string",
-                                "description": "Markdown文档的文件路径"
+                                "description": "Markdown 文档的文件路径"
                             },
                             "save_as_new_file": {
                                 "type": "boolean",
