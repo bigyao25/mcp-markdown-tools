@@ -25,8 +25,8 @@ pub struct MarkdownTools;
 impl ServerHandler for MarkdownTools {
   fn get_info(&self) -> ServerInfo {
     ServerInfo {
-      server_info: Implementation { name: "mcp-markdown-tools".to_string(), version: "0.0.1".to_string() },
-      instructions: Some("一个 markdown 文档工具集 - v0.1.0.20250829".into()),
+      server_info: Implementation { name: "mcp-markdown-tools".to_string(), version: "0.1.0".to_string() },
+      instructions: Some("一个 markdown 文档工具集".into()),
       ..Default::default()
     }
   }
