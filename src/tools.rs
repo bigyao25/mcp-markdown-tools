@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use crate::config::{CheckHeadingConfig, GenerateChapterConfig, RemoveChapterConfig};
+use crate::config::{CheckHeadingConfig, GenerateChapterConfig, LocalizeImagesConfig, RemoveChapterConfig};
+use crate::image_localizer::ImageLocalizer;
 use crate::mst::NumberingConfig;
 use crate::numbering::NumberingGenerator;
 use crate::parser::MarkdownParser;
@@ -128,7 +129,7 @@ impl MarkdownToolsImpl {
     let mut prev_level = None;
     let mut level_stack = Vec::new(); // 记录层级栈
 
-    for (i, header) in headers.iter().enumerate() {
+    for (_i, header) in headers.iter().enumerate() {
       let line_number = header.line_number;
       let raw_line = &header.raw_line;
       let current_level = header.header_level().unwrap();
@@ -232,6 +233,55 @@ impl MarkdownToolsImpl {
       None => parent.join(format!("{}_{}.{}", stem, default_suffix, extension)),
     };
     new_path.to_str().unwrap().to_string()
+  }
+
+  /// 本地化图片实现
+  pub async fn localize_images_impl(config: LocalizeImagesConfig) -> Result<CallToolResult, McpError> {
+    // 验证文件
+    if let Err(e) = crate::utils::validate_markdown_file(&config.full_file_path) {
+      return Ok(CallToolResult::error(vec![Content::text(format!("文件验证失败: {}", e))]));
+    }
+
+    // 读取文件内容
+    let content = match crate::utils::read_file_content(&config.full_file_path) {
+      Ok(content) => content,
+      Err(e) => return Ok(CallToolResult::error(vec![Content::text(format!("读取文件失败: {}", e))])),
+    };
+
+    // 解析文档
+    let parser = match MarkdownParser::new() {
+      Ok(parser) => parser,
+      Err(e) => return Ok(CallToolResult::error(vec![Content::text(format!("创建解析器失败: {}", e))])),
+    };
+
+    let mut mst = match parser.parse(&content) {
+      Ok(mst) => mst,
+      Err(e) => return Ok(CallToolResult::error(vec![Content::text(format!("解析 Markdown 失败: {}", e))])),
+    };
+
+    // 创建图片本地化器
+    let localizer = ImageLocalizer::new(config.clone());
+
+    // 本地化图片
+    let results = match localizer.localize_images(&mut mst).await {
+      Ok(results) => results,
+      Err(e) => return Ok(CallToolResult::error(vec![Content::text(format!("图片本地化失败: {}", e))])),
+    };
+
+    // 渲染更新后的文档
+    let renderer = MarkdownRenderer::new();
+    let new_content = renderer.render(&mst);
+
+    // 写回文件
+    if let Err(e) = crate::utils::write_file_content(&config.full_file_path, &new_content) {
+      return Ok(CallToolResult::error(vec![Content::text(format!("写入文件失败: {}", e))]));
+    }
+
+    // 生成结果报告
+    let mut report = vec![format!("✅ 处理完毕: {}", config.full_file_path)];
+    report.extend(results);
+
+    Ok(CallToolResult::success(vec![Content::text(report.join("\n"))]))
   }
 }
 

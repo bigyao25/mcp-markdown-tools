@@ -61,12 +61,6 @@ where
     let new_content = operation(&content).map_err(|e| MarkdownError::ParseError(e))?;
 
     let output_path = if save_as_new_file { new_full_file_path } else { full_file_path };
-    std::eprintln!(
-      "120010: save_as_new_file: {}, new_full_file_path: {}, output_path: {}",
-      save_as_new_file,
-      new_full_file_path,
-      output_path
-    );
 
     write_file_content(output_path, &new_content)?;
 

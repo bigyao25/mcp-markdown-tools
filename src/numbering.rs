@@ -64,7 +64,7 @@ impl NumberingGenerator {
   }
 
   /// 格式化编号
-  fn format_numbering(&self, path: &[usize], level: usize) -> String {
+  fn format_numbering(&self, path: &[usize], _level: usize) -> String {
     if path.is_empty() {
       return String::new();
     }

@@ -51,6 +51,43 @@ impl MarkdownRenderer {
       NodeType::Content(content) => {
         result.push(content.clone());
       }
+      NodeType::Image(image_info) => {
+        // 渲染图片，优先使用本地路径
+        let url = image_info.local_path.as_ref().unwrap_or(&image_info.original_url);
+
+        match image_info.image_type {
+          crate::mst::ImageType::Markdown => {
+            let title_part = image_info.title.as_ref().map(|t| format!(" \"{}\"", t)).unwrap_or_default();
+            result.push(format!("![{}]({}{})", image_info.alt_text, url, title_part));
+          }
+          crate::mst::ImageType::Html => {
+            // 渲染 HTML img 标签，保留原有属性
+            let mut img_tag = String::from("<img");
+
+            // 添加前置属性
+            if let Some(attrs) = &image_info.html_attributes {
+              if !attrs.is_empty() {
+                img_tag.push(' ');
+                img_tag.push_str(attrs);
+              }
+            }
+
+            // 添加 src 属性
+            img_tag.push_str(&format!(" src=\"{}\"", url));
+
+            // 如果有 alt 文本且不在现有属性中，添加 alt 属性
+            if !image_info.alt_text.is_empty() {
+              let attrs_str = image_info.html_attributes.as_deref().unwrap_or("");
+              if !attrs_str.contains("alt=") {
+                img_tag.push_str(&format!(" alt=\"{}\"", image_info.alt_text));
+              }
+            }
+
+            img_tag.push('>');
+            result.push(img_tag);
+          }
+        }
+      }
     }
   }
 
@@ -89,6 +126,43 @@ impl MarkdownRenderer {
       }
       NodeType::Content(content) => {
         result.push(content.clone());
+      }
+      NodeType::Image(image_info) => {
+        // 渲染图片，优先使用本地路径
+        let url = image_info.local_path.as_ref().unwrap_or(&image_info.original_url);
+
+        match image_info.image_type {
+          crate::mst::ImageType::Markdown => {
+            let title_part = image_info.title.as_ref().map(|t| format!(" \"{}\"", t)).unwrap_or_default();
+            result.push(format!("![{}]({}{})", image_info.alt_text, url, title_part));
+          }
+          crate::mst::ImageType::Html => {
+            // 渲染 HTML img 标签，保留原有属性
+            let mut img_tag = String::from("<img");
+
+            // 添加前置属性
+            if let Some(attrs) = &image_info.html_attributes {
+              if !attrs.is_empty() {
+                img_tag.push(' ');
+                img_tag.push_str(attrs);
+              }
+            }
+
+            // 添加 src 属性
+            img_tag.push_str(&format!(" src=\"{}\"", url));
+
+            // 如果有 alt 文本且不在现有属性中，添加 alt 属性
+            if !image_info.alt_text.is_empty() {
+              let attrs_str = image_info.html_attributes.as_deref().unwrap_or("");
+              if !attrs_str.contains("alt=") {
+                img_tag.push_str(&format!(" alt=\"{}\"", image_info.alt_text));
+              }
+            }
+
+            img_tag.push('>');
+            result.push(img_tag);
+          }
+        }
       }
     }
   }

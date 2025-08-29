@@ -4,11 +4,10 @@ use rmcp::{
   transport::io::stdio,
   ErrorData as McpError, ServerHandler,
 };
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 mod config;
 mod error;
+mod image_localizer;
 mod mst;
 mod numbering;
 mod parser;
@@ -16,7 +15,7 @@ mod renderer;
 mod tools;
 mod utils;
 
-use config::{CheckHeadingConfig, GenerateChapterConfig, RemoveChapterConfig};
+use config::{CheckHeadingConfig, GenerateChapterConfig, LocalizeImagesConfig, RemoveChapterConfig};
 use tools::MarkdownToolsImpl;
 
 #[derive(Clone)]
@@ -80,32 +79,6 @@ impl ServerHandler for MarkdownTools {
                     .clone(),
                 ),
             ),
-//             Tool::new(
-//                 "check_chapter_numbers",
-//                 r#"验证 Markdown 文档标题行(Head line)的编号。
-
-// 格式要求：
-// 1. 文档编号只能是以下三种编号格式中的一种：
-// - 纯数字，例如：1. 1.1. 1.1.1. 1.2. 2. 2.1.
-// - 纯中文，例如：一、 一、一、 一、一、一、 一、二、 二、 二、一、
-// - 一级编号为中文，二级及以下编号为数字，例如：一、 1. 1.1. 1.2. 2. 二、 1. 1.1. 2. 2.1.
-// 2. 编号必须连贯，不能跳号，例如(跳号)： 1. 1.1. 1.3. 2."#,
-//                 std::sync::Arc::new(
-//                     serde_json::json!({
-//                         "type": "object",
-//                         "properties": {
-//                             "full_file_path": {
-//                                 "type": "string",
-//                                 "description": "Markdown 文档的文件路径，必须使用绝对路径"
-//                             }
-//                         },
-//                         "required": ["full_file_path"]
-//                     })
-//                     .as_object()
-//                     .unwrap()
-//                     .clone(),
-//                 ),
-//             ),
             Tool::new(
                 "generate_chapter_number",
                 r#"为 Markdown 文档所有的标题行(Head line)创建编号。
@@ -167,8 +140,9 @@ impl ServerHandler for MarkdownTools {
                             },
                             "new_full_file_path": {
                                 "type": "string",
-                                "description": "新文件名，必须使用绝对路径。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_numed.md。",
-                                "default": "my_doc_numed"
+                                "description": r#"新文件名，必须使用绝对路径。save_as_new_file=true 时生效。
+默认与原文档同目录，默认文件名为：{original_file_name}_numed.md。"#,
+                                "default": "{full_dir_of_original_file}/{original_file_name}_numed.md"
                             }
                         },
                         "required": ["full_file_path"]
@@ -197,8 +171,43 @@ impl ServerHandler for MarkdownTools {
                             },
                             "new_full_file_path": {
                                 "type": "string",
-                                "description": "新文件名，必须使用绝对路径。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_unnumed.md。",
-                                "default": "my_doc_unnumed"
+                                "description": r#"新文件名，必须使用绝对路径。save_as_new_file=true 时生效。
+默认与原文档同目录，默认文件名为：{original_file_name}_unnumed.md。"#,
+                                "default": "{full_dir_of_original_file}/{original_file_name}_unnumed.md"
+                            }
+                        },
+                        "required": ["full_file_path"]
+                    })
+                    .as_object()
+                    .unwrap()
+                    .clone(),
+                ),
+            ),
+            Tool::new(
+                "localize_images",
+                r#"将整个 Markdown 文档中引用的远程图片资源保存到本地，并且更改文档中的引用。
+为了提高处理速度，你应该直接对整个文件执行该工具，而不是对原文件分段读取处理。"#,
+                std::sync::Arc::new(
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": {
+                            "full_file_path": {
+                                "type": "string",
+                                "description": "Markdown 文档的文件路径，必须使用绝对路径"
+                            },
+                            "image_file_name_pattern": {
+                                "type": "string",
+                                "description": "保存到本地的图片文件名格式，不包含扩展名。
+支持的通配符有：
+- multilevel_num: 图片所在的多层级编号，例如：1.2.1.
+- index: 序号，从零开始
+- hash: 6位哈希字符",
+                                "default": "{multilevel_num}-{index}"
+                            },
+                            "save_to_dir": {
+                                "type": "string",
+                                "description": "保存到的目录，默认为原文档同目录下的 assets 目录",
+                                "default": "{full_dir_of_original_file}/assets/"
                             }
                         },
                         "required": ["full_file_path"]
@@ -225,13 +234,15 @@ impl ServerHandler for MarkdownTools {
       }
       "generate_chapter_number" => {
         let config = GenerateChapterConfig::from_args(request.arguments.as_ref())?;
-        std::eprintln!("120001 {:?}", request.arguments);
-        std::eprintln!("120002 {:?}", config);
         MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await
       }
       "remove_all_chapter_numbers" => {
         let config = RemoveChapterConfig::from_args(request.arguments.as_ref())?;
         MarkdownToolsImpl::remove_all_chapter_numbers_impl(config, "unnumed").await
+      }
+      "localize_images" => {
+        let config = LocalizeImagesConfig::from_args(request.arguments.as_ref())?;
+        MarkdownToolsImpl::localize_images_impl(config).await
       }
       _ => Err(McpError::method_not_found::<CallToolRequestMethod>()),
     }
