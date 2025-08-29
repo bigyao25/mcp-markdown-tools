@@ -19,24 +19,16 @@ mod utils;
 use config::{CheckHeadingConfig, GenerateChapterConfig, RemoveChapterConfig};
 use tools::MarkdownToolsImpl;
 
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct InsertHeadRequest {
-  #[schemars(description = "Markdown文档的文件路径")]
-  pub file_path: String,
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct InsertTailRequest {
-  #[schemars(description = "Markdown文档的文件路径")]
-  pub file_path: String,
-}
-
 #[derive(Clone)]
 pub struct MarkdownTools;
 
 impl ServerHandler for MarkdownTools {
   fn get_info(&self) -> ServerInfo {
-    ServerInfo { instructions: Some("一个 markdown 文档工具集。".into()), ..Default::default() }
+    ServerInfo {
+      server_info: Implementation { name: "mcp-markdown-tools".to_string(), version: "0.0.1".to_string() },
+      instructions: Some("一个 markdown 文档工具集 - v0.1.0.20250829".into()),
+      ..Default::default()
+    }
   }
 
   async fn list_tools(
@@ -76,12 +68,12 @@ impl ServerHandler for MarkdownTools {
                     serde_json::json!({
                         "type": "object",
                         "properties": {
-                            "file_path": {
+                            "full_file_path": {
                                 "type": "string",
-                                "description": "Markdown 文档的文件路径"
+                                "description": "Markdown 文档的文件路径，必须使用绝对路径"
                             }
                         },
-                        "required": ["file_path"]
+                        "required": ["full_file_path"]
                     })
                     .as_object()
                     .unwrap()
@@ -102,12 +94,12 @@ impl ServerHandler for MarkdownTools {
 //                     serde_json::json!({
 //                         "type": "object",
 //                         "properties": {
-//                             "file_path": {
+//                             "full_file_path": {
 //                                 "type": "string",
-//                                 "description": "Markdown 文档的文件路径"
+//                                 "description": "Markdown 文档的文件路径，必须使用绝对路径"
 //                             }
 //                         },
-//                         "required": ["file_path"]
+//                         "required": ["full_file_path"]
 //                     })
 //                     .as_object()
 //                     .unwrap()
@@ -123,9 +115,9 @@ impl ServerHandler for MarkdownTools {
                     serde_json::json!({
                         "type": "object",
                         "properties": {
-                            "file_path": {
+                            "full_file_path": {
                                 "type": "string",
-                                "description": "Markdown 文档的文件路径"
+                                "description": "Markdown 文档的文件路径，必须使用绝对路径"
                             },
                             "ignore_h1": {
                                 "type": "boolean",
@@ -173,13 +165,13 @@ impl ServerHandler for MarkdownTools {
                                 "description": "编辑后，是否另存为新文件，为false时将覆盖原文件。",
                                 "default": false
                             },
-                            "new_file_name": {
+                            "new_full_file_path": {
                                 "type": "string",
-                                "description": "新文件名，不包括扩展名(.md)。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_numed.md。",
+                                "description": "新文件名，必须使用绝对路径。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_numed.md。",
                                 "default": "my_doc_numed"
                             }
                         },
-                        "required": ["file_path"]
+                        "required": ["full_file_path"]
                     })
                     .as_object()
                     .unwrap()
@@ -194,22 +186,22 @@ impl ServerHandler for MarkdownTools {
                     serde_json::json!({
                         "type": "object",
                         "properties": {
-                            "file_path": {
+                            "full_file_path": {
                                 "type": "string",
-                                "description": "Markdown 文档的文件路径"
+                                "description": "Markdown 文档的文件路径，必须使用绝对路径"
                             },
                             "save_as_new_file": {
                                 "type": "boolean",
                                 "description": "编辑后，是否另存为新文件，文件名为：{原文件名}_unnumed.md。为false时将覆盖原文件。",
                                 "default": false
                             },
-                            "new_file_name": {
+                            "new_full_file_path": {
                                 "type": "string",
-                                "description": "新文件名，不包括扩展名(.md)。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_unnumed.md。",
+                                "description": "新文件名，必须使用绝对路径。save_as_new_file=true 时生效。建议新文件名为：{ori_file_name}_unnumed.md。",
                                 "default": "my_doc_unnumed"
                             }
                         },
-                        "required": ["file_path"]
+                        "required": ["full_file_path"]
                     })
                     .as_object()
                     .unwrap()
@@ -233,6 +225,8 @@ impl ServerHandler for MarkdownTools {
       }
       "generate_chapter_number" => {
         let config = GenerateChapterConfig::from_args(request.arguments.as_ref())?;
+        std::eprintln!("120001 {:?}", request.arguments);
+        std::eprintln!("120002 {:?}", config);
         MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await
       }
       "remove_all_chapter_numbers" => {

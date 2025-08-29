@@ -15,10 +15,11 @@ impl MarkdownToolsImpl {
     config: GenerateChapterConfig,
     default_suffix: &str,
   ) -> Result<CallToolResult, McpError> {
-    let new_file_path = Self::generate_new_filename(&config.file_path, config.new_file_name.as_deref(), default_suffix);
+    let new_full_file_path =
+      Self::generate_new_filename(&config.full_file_path, config.new_full_file_path.as_deref(), default_suffix);
 
     execute_markdown_operation(
-      &config.file_path,
+      &config.full_file_path,
       |content| {
         let parser = MarkdownParser::new().map_err(|e| format!("创建解析器失败: {}", e))?;
 
@@ -38,9 +39,9 @@ impl MarkdownToolsImpl {
 
         Ok(result)
       },
-      format!("成功为文件 {} 生成章节编号", config.file_path),
+      format!("成功为文件 {} 生成章节编号", config.full_file_path),
       config.save_as_new_file,
-      &new_file_path,
+      new_full_file_path.as_str(),
     )
   }
 
@@ -48,10 +49,11 @@ impl MarkdownToolsImpl {
     config: RemoveChapterConfig,
     default_suffix: &str,
   ) -> Result<CallToolResult, McpError> {
-    let new_file_path = Self::generate_new_filename(&config.file_path, config.new_file_name.as_deref(), default_suffix);
+    let new_full_file_path =
+      Self::generate_new_filename(&config.full_file_path, config.new_full_file_path.as_deref(), default_suffix);
 
     execute_markdown_operation(
-      &config.file_path,
+      &config.full_file_path,
       |content| {
         let parser = MarkdownParser::new().map_err(|e| format!("创建解析器失败: {}", e))?;
 
@@ -62,17 +64,17 @@ impl MarkdownToolsImpl {
 
         Ok(result)
       },
-      format!("成功清除文件 {} 的所有章节编号", config.file_path),
+      format!("成功清除文件 {} 的所有章节编号", config.full_file_path),
       config.save_as_new_file,
-      &new_file_path,
+      new_full_file_path.as_str(),
     )
   }
 
   pub async fn check_heading_impl(config: CheckHeadingConfig) -> Result<CallToolResult, McpError> {
     let result = (|| -> crate::error::Result<CallToolResult> {
-      crate::utils::validate_markdown_file(&config.file_path)?;
+      crate::utils::validate_markdown_file(&config.full_file_path)?;
 
-      let content = crate::utils::read_file_content(&config.file_path)?;
+      let content = crate::utils::read_file_content(&config.full_file_path)?;
 
       // 解析文档
       let parser =
@@ -219,16 +221,16 @@ impl MarkdownToolsImpl {
   }
 
   /// 生成新文件名
-  fn generate_new_filename(file_path: &str, new_file_name: Option<&str>, default_suffix: &str) -> String {
-    let path = Path::new(file_path);
+  fn generate_new_filename(full_file_path: &str, new_full_file_path: Option<&str>, default_suffix: &str) -> String {
+    let path = Path::new(full_file_path);
     let parent = path.parent().unwrap_or(Path::new("."));
     let stem = path.file_stem().unwrap().to_str().unwrap();
     let extension = path.extension().unwrap().to_str().unwrap();
 
-    let new_path = parent.join(match new_file_name {
-      Some(name) => format!("{}.{}", name, extension),
-      None => format!("{}_{}.{}", stem, default_suffix, extension),
-    });
+    let new_path = match new_full_file_path {
+      Some(name) => Path::new(name).to_path_buf(),
+      None => parent.join(format!("{}_{}.{}", stem, default_suffix, extension)),
+    };
     new_path.to_str().unwrap().to_string()
   }
 }
