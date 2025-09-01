@@ -126,3 +126,84 @@ impl LocalizeImagesConfig {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use serde_json::{Map, Value};
+
+  /// 测试 GenerateChapterConfig 的有效参数解析
+  #[test]
+  fn test_generate_chapter_config_from_valid_args() {
+    let mut args = Map::new();
+    args.insert("full_file_path".to_string(), Value::String("/path/to/file.md".to_string()));
+    args.insert("ignore_h1".to_string(), Value::Bool(true));
+    args.insert("use_chinese_number".to_string(), Value::Bool(true));
+    args.insert("use_arabic_number_for_sublevel".to_string(), Value::Bool(false));
+    args.insert("save_as_new_file".to_string(), Value::Bool(true));
+    args.insert("new_full_file_path".to_string(), Value::String("/path/to/new_file.md".to_string()));
+
+    let config = GenerateChapterConfig::from_args(Some(&args)).unwrap();
+
+    assert_eq!(config.full_file_path, "/path/to/file.md");
+    assert_eq!(config.ignore_h1, true);
+    assert_eq!(config.use_chinese_number, true);
+    assert_eq!(config.use_arabic_number_for_sublevel, false);
+    assert_eq!(config.save_as_new_file, true);
+    assert_eq!(config.new_full_file_path, Some("/path/to/new_file.md".to_string()));
+  }
+
+  /// 测试 GenerateChapterConfig 的默认值
+  #[test]
+  fn test_generate_chapter_config_defaults() {
+    let mut args = Map::new();
+    args.insert("full_file_path".to_string(), Value::String("/path/to/file.md".to_string()));
+
+    let config = GenerateChapterConfig::from_args(Some(&args)).unwrap();
+
+    assert_eq!(config.full_file_path, "/path/to/file.md");
+    assert_eq!(config.ignore_h1, false);
+    assert_eq!(config.use_chinese_number, false);
+    assert_eq!(config.use_arabic_number_for_sublevel, true);
+    assert_eq!(config.save_as_new_file, false);
+    assert_eq!(config.new_full_file_path, None);
+  }
+
+  /// 测试 GenerateChapterConfig 缺少必需参数的错误
+  #[test]
+  fn test_generate_chapter_config_missing_required_param() {
+    let args = Map::new();
+    let result = GenerateChapterConfig::from_args(Some(&args));
+
+    assert!(result.is_err());
+    let error_msg = result.unwrap_err().to_string();
+    assert!(error_msg.contains("缺少 full_file_path 参数"));
+  }
+
+  /// 测试 LocalizeImagesConfig 的 get_resolved_save_dir 方法
+  #[test]
+  fn test_localize_images_config_get_resolved_save_dir() {
+    // 测试包含占位符的情况
+    let mut args = Map::new();
+    args.insert("full_file_path".to_string(), Value::String("/home/user/docs/test.md".to_string()));
+    args.insert("save_to_dir".to_string(), Value::String("{full_dir_of_original_file}/assets/".to_string()));
+
+    let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
+    let resolved_dir = config.get_resolved_save_dir();
+
+    assert_eq!(resolved_dir, "/home/user/docs/assets/");
+  }
+
+  /// 测试 LocalizeImagesConfig 的 get_resolved_save_dir 方法（无占位符）
+  #[test]
+  fn test_localize_images_config_get_resolved_save_dir_no_placeholder() {
+    let mut args = Map::new();
+    args.insert("full_file_path".to_string(), Value::String("/home/user/docs/test.md".to_string()));
+    args.insert("save_to_dir".to_string(), Value::String("/absolute/path/images/".to_string()));
+
+    let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
+    let resolved_dir = config.get_resolved_save_dir();
+
+    assert_eq!(resolved_dir, "/absolute/path/images/");
+  }
+}
