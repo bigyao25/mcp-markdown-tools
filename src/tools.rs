@@ -288,16 +288,309 @@ impl MarkdownToolsImpl {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use std::fs;
+  use tempfile::{NamedTempFile, TempDir};
 
+  /// 测试生成章节编号 - 阿拉伯数字
   #[tokio::test]
   async fn test_generate_chapter_number_arabic() {
-    // 这里可以添加集成测试
-    // 由于需要文件系统操作，暂时跳过
+    let content = r#"# 第一章
+
+## 背景
+
+### 历史
+
+## 目标
+
+# 第二章
+
+## 实现
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = GenerateChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      ignore_h1: false,
+      use_chinese_number: false,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 验证文件内容被修改
+    let new_content = fs::read_to_string(temp_file.path()).unwrap();
+    assert!(new_content.contains("# 1. 第一章"));
+    assert!(new_content.contains("## 1.1. 背景"));
+    assert!(new_content.contains("### 1.1.1. 历史"));
+    assert!(new_content.contains("## 1.2. 目标"));
+    assert!(new_content.contains("# 2. 第二章"));
+    assert!(new_content.contains("## 2.1. 实现"));
   }
 
+  /// 测试生成章节编号 - 中文数字
+  #[tokio::test]
+  async fn test_generate_chapter_number_chinese() {
+    let content = r#"# 第一章
+
+## 背景
+
+# 第二章
+
+## 实现
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = GenerateChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      ignore_h1: false,
+      use_chinese_number: true,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 验证文件内容被修改
+    let new_content = fs::read_to_string(temp_file.path()).unwrap();
+    assert!(new_content.contains("# 一、第一章"));
+    assert!(new_content.contains("## 1. 背景"));
+    assert!(new_content.contains("# 二、第二章"));
+    assert!(new_content.contains("## 1. 实现"));
+  }
+
+  /// 测试生成章节编号 - 忽略 H1
+  #[tokio::test]
+  async fn test_generate_chapter_number_ignore_h1() {
+    let content = r#"# 文档标题
+
+## 第一章
+
+### 背景
+
+## 第二章
+
+### 实现
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = GenerateChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      ignore_h1: true,
+      use_chinese_number: false,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 验证文件内容被修改
+    let new_content = fs::read_to_string(temp_file.path()).unwrap();
+    assert!(new_content.contains("# 文档标题")); // H1 不变
+    assert!(new_content.contains("## 1. 第一章"));
+    assert!(new_content.contains("### 1.1. 背景"));
+    assert!(new_content.contains("## 2. 第二章"));
+    assert!(new_content.contains("### 2.1. 实现"));
+  }
+
+  /// 测试生成章节编号 - 保存为新文件
+  #[tokio::test]
+  async fn test_generate_chapter_number_save_as_new() {
+    let content = r#"# 第一章
+
+## 背景
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let temp_dir = TempDir::new().unwrap();
+    let new_file_path = temp_dir.path().join("new_file.md");
+
+    let config = GenerateChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      ignore_h1: false,
+      use_chinese_number: false,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: true,
+      new_full_file_path: Some(new_file_path.to_str().unwrap().to_string()),
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 验证原文件未被修改
+    let original_content = fs::read_to_string(temp_file.path()).unwrap();
+    assert_eq!(original_content, content);
+
+    // 验证新文件被创建并包含编号
+    assert!(new_file_path.exists());
+    let new_content = fs::read_to_string(&new_file_path).unwrap();
+    assert!(new_content.contains("# 1. 第一章"));
+    assert!(new_content.contains("## 1.1. 背景"));
+  }
+
+  /// 测试移除章节编号
   #[tokio::test]
   async fn test_remove_all_chapter_numbers() {
-    // 这里可以添加集成测试
-    // 由于需要文件系统操作，暂时跳过
+    let content = r#"# 1. 第一章
+
+## 1.1. 背景
+
+### 1.1.1. 历史
+
+## 1.2. 目标
+
+# 2. 第二章
+
+## 2.1. 实现
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = RemoveChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::remove_all_chapter_numbers_impl(config, "unnumed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 验证编号被移除
+    let new_content = fs::read_to_string(temp_file.path()).unwrap();
+    assert!(new_content.contains("# 第一章"));
+    assert!(new_content.contains("## 背景"));
+    assert!(new_content.contains("### 历史"));
+    assert!(new_content.contains("## 目标"));
+    assert!(new_content.contains("# 第二章"));
+    assert!(new_content.contains("## 实现"));
+
+    // 确保数字编号被完全移除
+    assert!(!new_content.contains("1."));
+    assert!(!new_content.contains("2."));
+  }
+
+  /// 测试检查标题 - 有效标题
+  #[tokio::test]
+  async fn test_check_heading_valid() {
+    let content = r#"# 第一章
+
+## 1.1 背景
+
+### 1.1.1 历史
+
+## 1.2 目标
+
+# 第二章
+
+## 2.1 实现
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = CheckHeadingConfig { full_file_path: temp_file.path().to_str().unwrap().to_string() };
+
+    let result = MarkdownToolsImpl::check_heading_impl(config).await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+  }
+
+  /// 测试检查标题 - 无效标题格式
+  #[tokio::test]
+  async fn test_check_heading_invalid_format() {
+    let content = r#"# 正确的标题
+
+##错误的标题
+
+### 正确的三级标题
+
+####  错误的标题
+"#;
+
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), content).unwrap();
+
+    let config = CheckHeadingConfig { full_file_path: temp_file.path().to_str().unwrap().to_string() };
+
+    let result = MarkdownToolsImpl::check_heading_impl(config).await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(true));
+  }
+
+  /// 测试文件验证错误
+  #[tokio::test]
+  async fn test_file_validation_error() {
+    let config = GenerateChapterConfig {
+      full_file_path: "/nonexistent/file.md".to_string(),
+      ignore_h1: false,
+      use_chinese_number: false,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_err());
+  }
+
+  /// 测试空文档处理
+  #[tokio::test]
+  async fn test_empty_document() {
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
+    fs::write(temp_file.path(), "").unwrap();
+
+    let config = GenerateChapterConfig {
+      full_file_path: temp_file.path().to_str().unwrap().to_string(),
+      ignore_h1: false,
+      use_chinese_number: false,
+      use_arabic_number_for_sublevel: true,
+      save_as_new_file: false,
+      new_full_file_path: None,
+    };
+
+    let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+
+    assert!(result.is_ok());
+    let call_result = result.unwrap();
+    assert_eq!(call_result.is_error, Some(false));
+
+    // 空文档应该保持为空
+    let content = fs::read_to_string(temp_file.path()).unwrap();
+    assert_eq!(content, "");
   }
 }

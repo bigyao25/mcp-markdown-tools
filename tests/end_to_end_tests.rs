@@ -19,7 +19,7 @@ mod tests {
   /// 测试完整的编号生成工作流
   #[tokio::test]
   async fn test_complete_numbering_workflow() {
-    let content = include_str!("../fixtures/sample.md");
+    let content = include_str!("fixtures/sample.md");
 
     let temp_file = NamedTempFile::new().unwrap();
     fs::write(temp_file.path(), content).unwrap();
@@ -188,7 +188,7 @@ mod tests {
     assert!(result.is_ok());
 
     let call_result = result.unwrap();
-    assert!(call_result.is_success);
+    assert_eq!(call_result.is_error, Some(false));
 
     // 测试无效标题
     let invalid_content = r#"# 正确标题
@@ -208,7 +208,7 @@ mod tests {
     assert!(result.is_ok());
 
     let call_result = result.unwrap();
-    assert!(!call_result.is_success);
+    assert_eq!(call_result.is_error, Some(true));
   }
 
   /// 测试多文件处理工作流
@@ -332,7 +332,7 @@ mod tests {
   /// 测试复杂文档结构的处理
   #[tokio::test]
   async fn test_complex_document_structure() {
-    let content = include_str!("../fixtures/complex.md");
+    let content = include_str!("fixtures/complex.md");
 
     let temp_file = NamedTempFile::new().unwrap();
     fs::write(temp_file.path(), content).unwrap();
