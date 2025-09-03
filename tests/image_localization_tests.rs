@@ -137,6 +137,7 @@ mod tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     let start_time = std::time::Instant::now();
@@ -255,6 +256,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -296,6 +298,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{multilevel_num}-{index}".to_string(),
       save_to_dir: "{full_dir_of_original_file}/assets/".to_string(),
+      new_full_file_path: None,
     };
 
     // 验证占位符解析
@@ -339,6 +342,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -409,6 +413,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     // 注意：这个测试依赖网络，在实际环境中可能失败
@@ -491,6 +496,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     let localization_result = MarkdownToolsImpl::localize_images_impl(localization_config).await;
@@ -541,6 +547,7 @@ mod mock_tests {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
       save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      new_full_file_path: None,
     };
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;

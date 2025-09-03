@@ -212,7 +212,7 @@ impl ServerHandler for MarkdownTools {
                             "new_full_file_path": {
                                 "type": "string",
                                 "description": r#"新文件名，必须使用绝对路径。为空则覆盖原文件。"#,
-                                "default": "{full_dir_of_original_file}/{original_file_name}_local.md"
+                                "default": ""
                             }
                         },
                         "required": ["full_file_path"]
