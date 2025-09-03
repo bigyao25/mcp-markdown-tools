@@ -1,6 +1,6 @@
 use crate::error::{MarkdownError, Result};
 use rmcp::{model::*, ErrorData as McpError};
-use std::fs;
+use std::fs::{self, OpenOptions};
 use std::path::Path;
 
 /// 验证文件路径并检查是否为有效的 Markdown 文件

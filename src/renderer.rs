@@ -17,6 +17,7 @@ impl MarkdownRenderer {
   pub fn render(&self, mst: &MSTNode) -> String {
     let mut result = Vec::new();
     self.render_node(mst, &mut result);
+    result.push("".to_string());
     result.join("\n")
   }
 
@@ -219,7 +220,8 @@ mod tests {
 
     let expected = r#"# 1. 标题1
 ## 1.1. 子标题1
-这是一段内容。"#;
+这是一段内容。
+"#;
 
     assert_eq!(result, expected);
   }
@@ -259,7 +261,8 @@ mod tests {
     let result = renderer.render(&root);
 
     let expected = r#"第一行内容
-第二行内容"#;
+第二行内容
+"#;
 
     assert_eq!(result, expected);
   }
@@ -281,7 +284,8 @@ mod tests {
     let result = renderer.render(&root);
 
     let expected = r#"# 一、标题1
-## 一、一、子标题1"#;
+## 一、一、子标题1
+"#;
 
     assert_eq!(result, expected);
   }
@@ -308,7 +312,8 @@ mod tests {
 
     let expected = r#"# 1. 标题1
 ## 1.1. 子标题1
-### 1.1.1. 子子标题1"#;
+### 1.1.1. 子子标题1
+"#;
 
     assert_eq!(result, expected);
   }

@@ -105,7 +105,7 @@ mod tests {
   #[tokio::test]
   async fn test_image_localization_many_images() {
     // 创建模拟服务器
-    let mock_server = common::mock_http_server::MockHttpServer::new().await;
+    let mock_server = common::MockHttpServer::new().await;
     let base_url = mock_server.url();
 
     // 准备测试图片数据 - 使用简单的测试数据
@@ -180,7 +180,7 @@ mod mock_tests {
   use mcp_markdown_tools::parser::MarkdownParser;
   use rstest::rstest;
 
-  use crate::common::mock_http_server::MockHttpServer;
+  use crate::common::MockHttpServer;
 
   #[rstest::fixture]
   pub async fn mock_server() -> MockHttpServer {

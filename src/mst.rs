@@ -159,6 +159,10 @@ impl MSTNode {
     matches!(self.node_type, NodeType::Image(_))
   }
 
+  pub fn is_empty(&self) -> bool {
+    self.children.is_empty()
+  }
+
   /// 获取图片信息（如果是图片节点）
   pub fn get_image_info(&self) -> Option<&ImageInfo> {
     match &self.node_type {
