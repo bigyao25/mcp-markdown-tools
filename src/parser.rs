@@ -39,9 +39,9 @@ impl MarkdownParser {
         let level = hashes.len();
 
         // 清理标题中的编号
-        let clean_title = self.remove_numbering_from_title(title);
+        let title = self.remove_numbering_from_title(title);
 
-        let header_node = MSTNode::new_header(level, title.to_string(), clean_title, line.to_string(), line_number);
+        let header_node = MSTNode::new_header(level, title, line.to_string(), line_number);
 
         // 找到合适的父节点
         self.insert_header_node(&mut root, &mut header_stack, header_node, level);
@@ -297,9 +297,9 @@ mod tests {
 
     assert_eq!(headers.len(), 5);
     assert_eq!(headers[0].header_level(), Some(1));
-    assert_eq!(headers[0].clean_title.as_ref().unwrap(), "标题1");
+    assert_eq!(headers[0].title.as_ref().unwrap(), "标题1");
     assert_eq!(headers[1].header_level(), Some(2));
-    assert_eq!(headers[1].clean_title.as_ref().unwrap(), "子标题1");
+    assert_eq!(headers[1].title.as_ref().unwrap(), "子标题1");
   }
 
   #[test]
@@ -423,12 +423,12 @@ mod tests {
     assert_eq!(headers.len(), 6);
 
     // 验证编号被正确移除
-    assert_eq!(headers[0].clean_title.as_ref().unwrap(), "第一章");
-    assert_eq!(headers[1].clean_title.as_ref().unwrap(), "第一节");
-    assert_eq!(headers[2].clean_title.as_ref().unwrap(), "第一小节");
-    assert_eq!(headers[3].clean_title.as_ref().unwrap(), "第二节");
-    assert_eq!(headers[4].clean_title.as_ref().unwrap(), "第二章");
-    assert_eq!(headers[5].clean_title.as_ref().unwrap(), "第一节");
+    assert_eq!(headers[0].title.as_ref().unwrap(), "第一章");
+    assert_eq!(headers[1].title.as_ref().unwrap(), "第一节");
+    assert_eq!(headers[2].title.as_ref().unwrap(), "第一小节");
+    assert_eq!(headers[3].title.as_ref().unwrap(), "第二节");
+    assert_eq!(headers[4].title.as_ref().unwrap(), "第二章");
+    assert_eq!(headers[5].title.as_ref().unwrap(), "第一节");
   }
 
   #[test]
@@ -446,11 +446,11 @@ mod tests {
     assert_eq!(headers.len(), 5);
 
     // 验证中文编号被正确移除
-    assert_eq!(headers[0].clean_title.as_ref().unwrap(), "第一章");
-    assert_eq!(headers[1].clean_title.as_ref().unwrap(), "第一节");
-    assert_eq!(headers[2].clean_title.as_ref().unwrap(), "第一小节");
-    assert_eq!(headers[3].clean_title.as_ref().unwrap(), "第二节");
-    assert_eq!(headers[4].clean_title.as_ref().unwrap(), "第二章");
+    assert_eq!(headers[0].title.as_ref().unwrap(), "第一章");
+    assert_eq!(headers[1].title.as_ref().unwrap(), "第一节");
+    assert_eq!(headers[2].title.as_ref().unwrap(), "第一小节");
+    assert_eq!(headers[3].title.as_ref().unwrap(), "第二节");
+    assert_eq!(headers[4].title.as_ref().unwrap(), "第二章");
   }
 
   #[test]
@@ -548,8 +548,8 @@ mod tests {
     let headers = mst.get_headers();
 
     assert_eq!(headers.len(), 2);
-    assert_eq!(headers[0].clean_title.as_ref().unwrap(), "标题1");
-    assert_eq!(headers[1].clean_title.as_ref().unwrap(), "标题2");
+    assert_eq!(headers[0].title.as_ref().unwrap(), "标题1");
+    assert_eq!(headers[1].title.as_ref().unwrap(), "标题2");
   }
 
   #[test]

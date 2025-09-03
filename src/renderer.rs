@@ -32,7 +32,7 @@ impl MarkdownRenderer {
       NodeType::Header(level) => {
         let hashes = "#".repeat(*level);
         let empty_title = String::new();
-        let title = node.clean_title.as_ref().unwrap_or(&empty_title);
+        let title = node.title.as_ref().unwrap_or(&empty_title);
 
         // 如果有编号信息，添加编号
         let numbered_title = if let Some(numbering) = &node.numbering {
@@ -115,7 +115,7 @@ impl MarkdownRenderer {
       NodeType::Header(level) => {
         let hashes = "#".repeat(*level);
         let empty_title = String::new();
-        let title = node.clean_title.as_ref().unwrap_or(&empty_title);
+        let title = node.title.as_ref().unwrap_or(&empty_title);
 
         result.push(format!("{} {}", hashes, title));
 
@@ -182,10 +182,10 @@ mod tests {
   fn create_test_mst_with_numbering() -> MSTNode {
     let mut root = MSTNode::new_root();
 
-    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "标题1".to_string(), "# 标题1".to_string(), 1);
+    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "# 标题1".to_string(), 1);
     h1.numbering = Some(NumberingInfo { path: vec![1], formatted: "1. ".to_string() });
 
-    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "子标题1".to_string(), "## 子标题1".to_string(), 2);
+    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "## 子标题1".to_string(), 2);
     h2.numbering = Some(NumberingInfo { path: vec![1, 1], formatted: "1.1. ".to_string() });
 
     let content = MSTNode::new_content("这是一段内容。".to_string(), 3);
@@ -200,8 +200,8 @@ mod tests {
   fn create_test_mst_without_numbering() -> MSTNode {
     let mut root = MSTNode::new_root();
 
-    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "标题1".to_string(), "# 标题1".to_string(), 1);
-    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "子标题1".to_string(), "## 子标题1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "# 标题1".to_string(), 1);
+    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "## 子标题1".to_string(), 2);
     let content = MSTNode::new_content("这是一段内容。".to_string(), 3);
 
     h2.add_child(content);
@@ -268,10 +268,10 @@ mod tests {
   fn test_render_headers_only() {
     let mut root = MSTNode::new_root();
 
-    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "标题1".to_string(), "# 标题1".to_string(), 1);
+    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "# 标题1".to_string(), 1);
     h1.numbering = Some(NumberingInfo { path: vec![1], formatted: "一、".to_string() });
 
-    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "子标题1".to_string(), "## 子标题1".to_string(), 2);
+    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "## 子标题1".to_string(), 2);
     h2.numbering = Some(NumberingInfo { path: vec![1, 1], formatted: "一、一、".to_string() });
 
     h1.add_child(h2);
@@ -290,14 +290,13 @@ mod tests {
   fn test_render_deep_nesting() {
     let mut root = MSTNode::new_root();
 
-    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "标题1".to_string(), "# 标题1".to_string(), 1);
+    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "# 标题1".to_string(), 1);
     h1.numbering = Some(NumberingInfo { path: vec![1], formatted: "1. ".to_string() });
 
-    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "子标题1".to_string(), "## 子标题1".to_string(), 2);
+    let mut h2 = MSTNode::new_header(2, "子标题1".to_string(), "## 子标题1".to_string(), 2);
     h2.numbering = Some(NumberingInfo { path: vec![1, 1], formatted: "1.1. ".to_string() });
 
-    let mut h3 =
-      MSTNode::new_header(3, "子子标题1".to_string(), "子子标题1".to_string(), "### 子子标题1".to_string(), 3);
+    let mut h3 = MSTNode::new_header(3, "子子标题1".to_string(), "### 子子标题1".to_string(), 3);
     h3.numbering = Some(NumberingInfo { path: vec![1, 1, 1], formatted: "1.1.1. ".to_string() });
 
     h2.add_child(h3);

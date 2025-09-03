@@ -133,12 +133,12 @@ mod tests {
   fn create_test_mst() -> MSTNode {
     let mut root = MSTNode::new_root();
 
-    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "标题1".to_string(), "# 标题1".to_string(), 1);
-    let mut h2_1 = MSTNode::new_header(2, "子标题1".to_string(), "子标题1".to_string(), "## 子标题1".to_string(), 2);
-    let h3_1 = MSTNode::new_header(3, "子子标题1".to_string(), "子子标题1".to_string(), "### 子子标题1".to_string(), 3);
-    let h3_2 = MSTNode::new_header(3, "子子标题2".to_string(), "子子标题2".to_string(), "### 子子标题2".to_string(), 4);
-    let h2_2 = MSTNode::new_header(2, "子标题2".to_string(), "子标题2".to_string(), "## 子标题2".to_string(), 5);
-    let h1_2 = MSTNode::new_header(1, "标题2".to_string(), "标题2".to_string(), "# 标题2".to_string(), 6);
+    let mut h1 = MSTNode::new_header(1, "标题1".to_string(), "# 标题1".to_string(), 1);
+    let mut h2_1 = MSTNode::new_header(2, "子标题1".to_string(), "## 子标题1".to_string(), 2);
+    let h3_1 = MSTNode::new_header(3, "子子标题1".to_string(), "### 子子标题1".to_string(), 3);
+    let h3_2 = MSTNode::new_header(3, "子子标题2".to_string(), "### 子子标题2".to_string(), 4);
+    let h2_2 = MSTNode::new_header(2, "子标题2".to_string(), "## 子标题2".to_string(), 5);
+    let h1_2 = MSTNode::new_header(1, "标题2".to_string(), "# 标题2".to_string(), 6);
 
     h2_1.add_child(h3_1);
     h2_1.add_child(h3_2);

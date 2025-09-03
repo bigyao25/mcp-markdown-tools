@@ -49,10 +49,8 @@ pub struct ImageInfo {
 pub struct MSTNode {
   /// 节点类型
   pub node_type: NodeType,
-  /// 原始标题文本（仅对 Header 节点有效）
+  /// 标题文本（移除了编号，仅对 Header 节点有效）
   pub title: Option<String>,
-  /// 清理后的标题文本（移除了编号）
-  pub clean_title: Option<String>,
   /// 原始行内容
   pub raw_line: String,
   /// 行号（从1开始）
@@ -95,7 +93,6 @@ impl MSTNode {
     Self {
       node_type: NodeType::Root,
       title: None,
-      clean_title: None,
       raw_line: String::new(),
       line_number: 0,
       children: Vec::new(),
@@ -104,11 +101,10 @@ impl MSTNode {
   }
 
   /// 创建标题节点
-  pub fn new_header(level: usize, title: String, clean_title: String, raw_line: String, line_number: usize) -> Self {
+  pub fn new_header(level: usize, title: String, raw_line: String, line_number: usize) -> Self {
     Self {
       node_type: NodeType::Header(level),
       title: Some(title),
-      clean_title: Some(clean_title),
       raw_line,
       line_number,
       children: Vec::new(),
@@ -121,7 +117,6 @@ impl MSTNode {
     Self {
       node_type: NodeType::Content(content.clone()),
       title: None,
-      clean_title: None,
       raw_line: content,
       line_number,
       children: Vec::new(),
@@ -134,7 +129,6 @@ impl MSTNode {
     Self {
       node_type: NodeType::Image(image_info),
       title: None,
-      clean_title: None,
       raw_line,
       line_number,
       children: Vec::new(),
@@ -254,7 +248,7 @@ impl MSTNode {
       }
       NodeType::Header(level) => {
         let empty_title = String::new();
-        let title = self.clean_title.as_ref().unwrap_or(&empty_title);
+        let title = self.title.as_ref().unwrap_or(&empty_title);
         let numbering = self.numbering.as_ref().map(|n| format!(" [{}]", n.formatted)).unwrap_or_default();
         writeln!(f, "{}H{}: {}{}", indent_str, level, title, numbering)?;
       }
@@ -286,7 +280,7 @@ mod tests {
     assert!(matches!(root.node_type, NodeType::Root));
     assert_eq!(root.children.len(), 0);
 
-    let header = MSTNode::new_header(1, "Title".to_string(), "Title".to_string(), "# Title".to_string(), 1);
+    let header = MSTNode::new_header(1, "Title".to_string(), "# Title".to_string(), 1);
     assert_eq!(header.header_level(), Some(1));
     assert!(header.is_header());
     assert!(!header.is_content());
@@ -299,9 +293,8 @@ mod tests {
   #[test]
   fn test_mst_tree_structure() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
-    let h2 =
-      MSTNode::new_header(2, "Section 1.1".to_string(), "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let h2 = MSTNode::new_header(2, "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
 
     h1.add_child(h2);
     root.add_child(h1);
@@ -313,9 +306,8 @@ mod tests {
   #[test]
   fn test_get_headers() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
-    let h2 =
-      MSTNode::new_header(2, "Section 1.1".to_string(), "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let h2 = MSTNode::new_header(2, "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
     let content = MSTNode::new_content("Some text".to_string(), 3);
 
     h1.add_child(h2);
@@ -383,9 +375,8 @@ mod tests {
   #[test]
   fn test_walk_functionality() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
-    let h2 =
-      MSTNode::new_header(2, "Section 1.1".to_string(), "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let h2 = MSTNode::new_header(2, "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
     let content = MSTNode::new_content("Some text".to_string(), 3);
 
     h1.add_child(h2);
@@ -403,9 +394,8 @@ mod tests {
   #[test]
   fn test_walk_mut_functionality() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
-    let h2 =
-      MSTNode::new_header(2, "Section 1.1".to_string(), "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let h2 = MSTNode::new_header(2, "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
 
     h1.add_child(h2);
     root.add_child(h1);
@@ -423,9 +413,8 @@ mod tests {
   #[test]
   fn test_apply_to_headers() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
-    let h2 =
-      MSTNode::new_header(2, "Section 1.1".to_string(), "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let h2 = MSTNode::new_header(2, "Section 1.1".to_string(), "## Section 1.1".to_string(), 2);
     let content = MSTNode::new_content("Some text".to_string(), 3);
 
     h1.add_child(h2);
@@ -496,7 +485,7 @@ mod tests {
   #[test]
   fn test_display_formatting() {
     let mut root = MSTNode::new_root();
-    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
+    let mut h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 1);
 
     // 添加编号信息
     h1.numbering = Some(NumberingInfo { path: vec![1], formatted: "1.".to_string() });
@@ -548,7 +537,7 @@ mod tests {
 
     // 添加各种类型的节点
     let content1 = MSTNode::new_content("Introduction".to_string(), 1);
-    let h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "Chapter 1".to_string(), "# Chapter 1".to_string(), 2);
+    let h1 = MSTNode::new_header(1, "Chapter 1".to_string(), "# Chapter 1".to_string(), 2);
     let content2 = MSTNode::new_content("Chapter content".to_string(), 3);
 
     let image_info = ImageInfo {

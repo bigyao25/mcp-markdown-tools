@@ -302,7 +302,7 @@ mod tests {
     MSTNode {
       node_type: NodeType::Image(image_info),
       title: None,
-      clean_title: None,
+
       raw_line: format!("![{}]({})", alt_text, url),
       line_number: 1,
       children: Vec::new(),
@@ -330,7 +330,7 @@ mod tests {
     MSTNode {
       node_type: NodeType::Image(image_info),
       title: None,
-      clean_title: None,
+
       raw_line,
       line_number: 1,
       children: Vec::new(),
