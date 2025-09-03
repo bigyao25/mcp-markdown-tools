@@ -22,3 +22,8 @@ mockall = "0.12"   # 模拟对象
 proptest = "1.4"   # 属性测试
 wiremock = "0.5"   # HTTP模拟服务器
 tokio-test = "0.4" # Tokio 测试工具
+rstest = "0.26"
+
+[features]
+default = []
+mock = []

@@ -225,8 +225,8 @@ impl MarkdownToolsImpl {
   fn generate_new_filename(full_file_path: &str, new_full_file_path: Option<&str>, default_suffix: &str) -> String {
     let path = Path::new(full_file_path);
     let parent = path.parent().unwrap_or(Path::new("."));
-    let stem = path.file_stem().unwrap().to_str().unwrap();
-    let extension = path.extension().unwrap().to_str().unwrap();
+    let stem = path.file_stem().unwrap_or_else(|| std::ffi::OsStr::new("file")).to_str().unwrap_or("file");
+    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("md");
 
     let new_path = match new_full_file_path {
       Some(name) => Path::new(name).to_path_buf(),
@@ -273,7 +273,11 @@ impl MarkdownToolsImpl {
     let new_content = renderer.render(&mst);
 
     // 写回文件
-    if let Err(e) = crate::utils::write_file_content(&config.full_file_path, &new_content) {
+    let save_full_file_path = match config.new_full_file_path {
+      Some(p) => p,
+      None => config.full_file_path.clone(),
+    };
+    if let Err(e) = crate::utils::write_file_content(&save_full_file_path, &new_content) {
       return Ok(CallToolResult::error(vec![Content::text(format!("写入文件失败: {}", e))]));
     }
 

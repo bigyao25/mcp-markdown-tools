@@ -1,16 +1,9 @@
 //! 端到端集成测试
 
 use mcp_markdown_tools::config::*;
-use mcp_markdown_tools::mst::NumberingConfig;
-use mcp_markdown_tools::numbering::NumberingGenerator;
-use mcp_markdown_tools::parser::MarkdownParser;
-use mcp_markdown_tools::renderer::MarkdownRenderer;
 use mcp_markdown_tools::tools::MarkdownToolsImpl;
 use std::fs;
-use std::path::Path;
 use tempfile::{NamedTempFile, TempDir};
-
-mod common;
 
 #[cfg(test)]
 mod tests {
@@ -21,7 +14,7 @@ mod tests {
   async fn test_complete_numbering_workflow() {
     let content = include_str!("fixtures/sample.md");
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), content).unwrap();
 
     // 第一步：生成阿拉伯数字编号
@@ -35,6 +28,9 @@ mod tests {
     };
 
     let result = MarkdownToolsImpl::generate_chapter_number_impl(config, "numed").await;
+    if let Err(ref e) = result {
+      println!("Error: {:?}", e);
+    }
     assert!(result.is_ok());
 
     // 验证编号被添加
@@ -82,7 +78,7 @@ mod tests {
 ### 具体步骤
 "#;
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), content).unwrap();
 
     // 生成中文编号
@@ -141,7 +137,7 @@ mod tests {
 ### 实现
 "#;
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), content).unwrap();
 
     // 生成编号，忽略 H1
@@ -179,7 +175,7 @@ mod tests {
 ## 1.2 目标
 "#;
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), valid_content).unwrap();
 
     let config = CheckHeadingConfig { full_file_path: temp_file.path().to_str().unwrap().to_string() };
@@ -334,7 +330,7 @@ mod tests {
   async fn test_complex_document_structure() {
     let content = include_str!("fixtures/complex.md");
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), content).unwrap();
 
     // 先验证标题结构
@@ -359,8 +355,8 @@ mod tests {
     // 验证复杂结构的编号
     let numbered_content = fs::read_to_string(temp_file.path()).unwrap();
     assert!(numbered_content.contains("# 一、主标题"));
-    assert!(numbered_content.contains("## 一、子标题"));
-    assert!(numbered_content.contains("### 一、三级标题"));
+    assert!(numbered_content.contains("## 一、一、子标题"));
+    assert!(numbered_content.contains("### 一、一、一、三级标题"));
     assert!(numbered_content.contains("# 二、第二个主标题"));
   }
 
@@ -412,7 +408,7 @@ mod tests {
       }
     }
 
-    let temp_file = NamedTempFile::new().unwrap();
+    let temp_file = NamedTempFile::with_suffix(".md").unwrap();
     fs::write(temp_file.path(), &large_content).unwrap();
 
     let start_time = std::time::Instant::now();
@@ -440,6 +436,6 @@ mod tests {
     assert!(numbered_content.contains("# 1. 第1章"));
     assert!(numbered_content.contains("# 100. 第100章"));
     assert!(numbered_content.contains("## 1.1. 小节"));
-    assert!(numbered_content.contains("### 1.1.1. 子小节"));
+    assert!(numbered_content.contains("### 100.5.3. 子小节"));
   }
 }

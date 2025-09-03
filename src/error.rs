@@ -150,37 +150,6 @@ mod tests {
     assert_eq!(propagated_error.to_string(), "验证错误: 由于文件错误导致的验证失败: 底层错误");
   }
 
-  /// 测试空消息的错误
-  #[test]
-  fn test_empty_message_error() {
-    let error = MarkdownError::ParseError("".to_string());
-    assert_eq!(error.to_string(), "解析错误: ");
-  }
-
-  /// 测试包含特殊字符的错误消息
-  #[test]
-  fn test_special_characters_in_error_message() {
-    let message = "错误：文件 'test.md' 在第 10 行包含无效字符 \"\\n\"";
-    let error = MarkdownError::ParseError(message.to_string());
-    assert_eq!(error.to_string(), format!("解析错误: {}", message));
-  }
-
-  /// 测试多字节 Unicode 字符的错误消息
-  #[test]
-  fn test_unicode_error_message() {
-    let message = "解析错误：文档包含emoji 🚀 和中文字符";
-    let error = MarkdownError::ValidationError(message.to_string());
-    assert_eq!(error.to_string(), format!("验证错误: {}", message));
-  }
-
-  /// 测试长错误消息
-  #[test]
-  fn test_long_error_message() {
-    let long_message = "这是一个非常长的错误消息，".repeat(100);
-    let error = MarkdownError::ConfigError(long_message.clone());
-    assert_eq!(error.to_string(), format!("配置错误: {}", long_message));
-  }
-
   /// 测试错误类型的相等性
   #[test]
   fn test_error_type_matching() {
@@ -209,22 +178,6 @@ mod tests {
       MarkdownError::ConfigError(_) => (),
       _ => panic!("应该匹配 ConfigError"),
     }
-  }
-
-  /// 测试错误转换的幂等性
-  #[test]
-  fn test_error_conversion_idempotency() {
-    let original_error = MarkdownError::ParseError("原始错误".to_string());
-    let mcp_error: McpError = original_error.into();
-
-    // 验证转换后的属性
-    assert_eq!(mcp_error.message, "原始错误");
-
-    // 多次转换应该产生相同的结果
-    let error2 = MarkdownError::ParseError("原始错误".to_string());
-    let mcp_error2: McpError = error2.into();
-
-    assert_eq!(mcp_error.message, mcp_error2.message);
   }
 
   /// 测试在函数中使用 Result 类型

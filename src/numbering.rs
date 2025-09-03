@@ -128,7 +128,7 @@ fn to_chinese_number(num: usize) -> String {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::mst::{MSTNode, NodeType};
+  use crate::mst::MSTNode;
 
   fn create_test_mst() -> MSTNode {
     let mut root = MSTNode::new_root();

@@ -8,6 +8,7 @@ use reqwest;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use url::Url;
 
 /// 图片本地化器
@@ -19,7 +20,10 @@ pub struct ImageLocalizer {
 impl ImageLocalizer {
   /// 创建新的图片本地化器
   pub fn new(config: LocalizeImagesConfig) -> Self {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+      .timeout(Duration::from_secs(10)) // 总超时时间
+      .build()
+      .unwrap();
     Self { config, client }
   }
 
@@ -91,10 +95,13 @@ impl ImageLocalizer {
       return Err(format!("HTTP 错误: {}", response.status()));
     }
 
+    let content_type =
+      response.headers().get(reqwest::header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).map(|s| s.to_string());
+
     let bytes = response.bytes().await.map_err(|e| format!("读取响应失败: {}", e))?;
 
     // 生成文件名
-    let filename = self.generate_filename(&image_info.original_url, index, &bytes)?;
+    let filename = self.generate_filename(&image_info.original_url, index, content_type.as_deref(), &bytes)?;
     let file_path = save_dir.join(&filename);
 
     // 保存文件
@@ -106,9 +113,15 @@ impl ImageLocalizer {
   }
 
   /// 生成文件名
-  fn generate_filename(&self, url: &str, index: usize, bytes: &[u8]) -> Result<String, String> {
+  fn generate_filename(
+    &self,
+    url: &str,
+    index: usize,
+    content_type: Option<&str>,
+    bytes: &[u8],
+  ) -> Result<String, String> {
     // 获取文件扩展名
-    let extension = self.get_file_extension(url)?;
+    let extension = self.get_file_extension(url, content_type)?;
 
     // 生成哈希
     let mut hasher = Sha256::new();
@@ -128,7 +141,7 @@ impl ImageLocalizer {
   }
 
   /// 获取文件扩展名
-  fn get_file_extension(&self, url: &str) -> Result<String, String> {
+  fn get_file_extension(&self, url: &str, content_type: Option<&str>) -> Result<String, String> {
     let parsed_url = Url::parse(url).map_err(|e| format!("解析 URL 失败: {}", e))?;
     let path = parsed_url.path();
 
@@ -138,8 +151,7 @@ impl ImageLocalizer {
       }
     }
 
-    // 默认扩展名
-    Ok("jpg".to_string())
+    Ok(content_type.unwrap_or("image/jpg").replace("image/", "").to_string())
   }
 
   /// 获取相对于 Markdown 文件的相对路径
@@ -264,7 +276,6 @@ mod tests {
   use super::*;
   use crate::mst::{ImageInfo, ImageType, MSTNode, NodeType};
   use std::fs;
-  use std::path::Path;
   use tempfile::{NamedTempFile, TempDir};
 
   /// 创建测试用的 LocalizeImagesConfig
@@ -273,6 +284,7 @@ mod tests {
       full_file_path: file_path.to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
       save_to_dir: save_dir.to_string(),
+      new_full_file_path: None,
     }
   }
 
@@ -334,7 +346,7 @@ mod tests {
 
     let config = create_test_config(temp_file.path().to_str().unwrap(), temp_dir.path().to_str().unwrap());
 
-    let localizer = ImageLocalizer::new(config.clone());
+    let _localizer = ImageLocalizer::new(config.clone());
 
     // 验证配置被正确设置（通过间接方式，因为字段是私有的）
     // 这里我们主要测试创建不会 panic
@@ -352,22 +364,22 @@ mod tests {
     let localizer = ImageLocalizer::new(config);
 
     // 测试数据
-    let url = "https://example.com/image.jpg";
+    let url = "https://example.com/image.svg";
     let index = 0;
     let bytes = b"fake image data";
 
-    let result = localizer.generate_filename(url, index, bytes);
-    assert!(result.is_ok());
+    let result = localizer.generate_filename(url, index, None, bytes);
 
-    let filename = result.unwrap();
-    assert!(filename.ends_with(".jpg"));
-    assert!(filename.contains("0-")); // index
-    assert!(filename.len() > 10); // 应该包含哈希
+    let re = regex::Regex::new(r"\d+-\w{6}.svg").unwrap();
+    match result {
+      Ok(file_name) => assert!(re.is_match(file_name.as_str()), "file_name ({}) is not match", file_name),
+      Err(_) => assert!(false, "generate_filename failed"),
+    }
   }
 
-  /// 测试文件名生成 - 不同扩展名
+  /// 测试文件名生成 - 扩展名来自 URL
   #[test]
-  fn test_generate_filename_different_extensions() {
+  fn test_generate_filename_extension_from_url() {
     let temp_file = NamedTempFile::new().unwrap();
     let temp_dir = TempDir::new().unwrap();
 
@@ -378,19 +390,36 @@ mod tests {
 
     // 测试不同的扩展名
     let test_cases = vec![
-      ("https://example.com/image.png", "png"),
-      ("https://example.com/image.gif", "gif"),
-      ("https://example.com/image.svg", "svg"),
-      ("https://example.com/image.webp", "webp"),
+      ("https://example.com/image.png", Some("image/png"), "png"),
+      ("https://example.com/image.gif", Some("image/gif"), "gif"),
+      ("https://example.com/image.svg", Some("image/svg"), "svg"),
+      ("https://example.com/image.webp", Some("image/webp"), "webp"),
     ];
 
-    for (url, expected_ext) in test_cases {
-      let filename = localizer.generate_filename(url, 0, bytes).unwrap();
+    for (url, content_type, expected_ext) in test_cases {
+      let filename = localizer.generate_filename(url, 0, content_type, bytes).unwrap();
       assert!(filename.ends_with(&format!(".{}", expected_ext)));
     }
   }
 
-  /// 测试文件名生成 - 无扩展名的 URL
+  /// 测试文件名生成 - 扩展名来自 content-type
+  #[test]
+  fn test_generate_filename_extension_from_content_type() {
+    let temp_file = NamedTempFile::new().unwrap();
+    let temp_dir = TempDir::new().unwrap();
+
+    let config = create_test_config(temp_file.path().to_str().unwrap(), temp_dir.path().to_str().unwrap());
+
+    let localizer = ImageLocalizer::new(config);
+
+    let url = "https://example.com/image";
+    let filename = localizer.generate_filename(url, 0, Some("image/svg"), b"test").unwrap();
+
+    // 应该使用默认扩展名 jpg
+    assert!(filename.ends_with(".svg"));
+  }
+
+  /// 测试文件名生成 - 默认扩展名
   #[test]
   fn test_generate_filename_no_extension() {
     let temp_file = NamedTempFile::new().unwrap();
@@ -401,7 +430,7 @@ mod tests {
     let localizer = ImageLocalizer::new(config);
 
     let url = "https://example.com/image";
-    let filename = localizer.generate_filename(url, 0, b"test").unwrap();
+    let filename = localizer.generate_filename(url, 0, None, b"test").unwrap();
 
     // 应该使用默认扩展名 jpg
     assert!(filename.ends_with(".jpg"));
@@ -418,7 +447,7 @@ mod tests {
 
     let localizer = ImageLocalizer::new(config);
 
-    let filename = localizer.generate_filename("https://example.com/test.png", 5, b"data").unwrap();
+    let filename = localizer.generate_filename("https://example.com/test.png", 5, Some("image/png"), b"data").unwrap();
 
     assert!(filename.starts_with("img_5_"));
     assert!(filename.ends_with(".png"));
@@ -435,10 +464,10 @@ mod tests {
     let localizer = ImageLocalizer::new(config);
 
     // 测试各种 URL 格式
-    assert_eq!(localizer.get_file_extension("https://example.com/image.JPG").unwrap(), "jpg");
-    assert_eq!(localizer.get_file_extension("https://example.com/path/image.PNG").unwrap(), "png");
-    assert_eq!(localizer.get_file_extension("https://example.com/image.gif?param=1").unwrap(), "gif");
-    assert_eq!(localizer.get_file_extension("https://example.com/noext").unwrap(), "jpg");
+    assert_eq!(localizer.get_file_extension("https://example.com/image.JPG", None).unwrap(), "jpg");
+    assert_eq!(localizer.get_file_extension("https://example.com/path/image.PNG", None).unwrap(), "png");
+    assert_eq!(localizer.get_file_extension("https://example.com/image.gif?param=1", None).unwrap(), "gif");
+    assert_eq!(localizer.get_file_extension("https://example.com/noext", None).unwrap(), "jpg");
     // 默认
   }
 
@@ -538,7 +567,7 @@ mod tests {
       assert_eq!(image_info.original_url, "https://example.com/image.png");
       assert!(image_info.html_attributes.is_none());
     } else {
-      panic!("期望图片节点");
+      assert!(false, "期望图片节点");
     }
   }
 
@@ -551,10 +580,11 @@ mod tests {
     fs::create_dir_all(md_file.parent().unwrap()).unwrap();
     fs::write(&md_file, "# Test").unwrap();
 
-    let mut config = LocalizeImagesConfig {
+    let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{multilevel_num}-{index}".to_string(),
       save_to_dir: "{full_dir_of_original_file}/assets/".to_string(),
+      new_full_file_path: None,
     };
 
     let resolved_dir = config.get_resolved_save_dir();
@@ -574,7 +604,7 @@ mod tests {
     let localizer = ImageLocalizer::new(config);
 
     // 测试无效 URL
-    let result = localizer.get_file_extension("not-a-url");
+    let result = localizer.get_file_extension("not-a-url", None);
     assert!(result.is_err());
   }
 
@@ -592,8 +622,8 @@ mod tests {
     let url = "https://example.com/image.jpg";
 
     // 多次生成应该产生相同的哈希
-    let filename1 = localizer.generate_filename(url, 0, data).unwrap();
-    let filename2 = localizer.generate_filename(url, 0, data).unwrap();
+    let filename1 = localizer.generate_filename(url, 0, Some("image/jpg"), data).unwrap();
+    let filename2 = localizer.generate_filename(url, 0, Some("image/jpg"), data).unwrap();
 
     assert_eq!(filename1, filename2);
   }
@@ -610,8 +640,8 @@ mod tests {
 
     let url = "https://example.com/image.jpg";
 
-    let filename1 = localizer.generate_filename(url, 0, b"data1").unwrap();
-    let filename2 = localizer.generate_filename(url, 0, b"data2").unwrap();
+    let filename1 = localizer.generate_filename(url, 0, Some("image/jpg"), b"data1").unwrap();
+    let filename2 = localizer.generate_filename(url, 0, Some("image/jpg"), b"data2").unwrap();
 
     assert_ne!(filename1, filename2);
   }
@@ -626,11 +656,12 @@ mod tests {
 
     let localizer = ImageLocalizer::new(config);
 
-    let result = localizer.generate_filename("https://example.com/image.jpg", 0, b"");
-    assert!(result.is_ok());
+    let result = localizer.generate_filename("https://example.com/image.jpg", 0, Some("image/jpg"), b"");
 
-    let filename = result.unwrap();
-    assert!(filename.ends_with(".jpg"));
-    assert!(filename.contains("0-")); // index 应该存在
+    let re = regex::Regex::new(r"\d+-\w{6}.jpg").unwrap();
+    match result {
+      Ok(file_name) => assert!(re.is_match(file_name.as_str()), "file_name ({}) is not match", file_name),
+      Err(_) => assert!(false, "generate_filename failed"),
+    }
   }
 }

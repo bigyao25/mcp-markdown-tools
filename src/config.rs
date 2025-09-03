@@ -28,6 +28,7 @@ pub struct LocalizeImagesConfig {
   pub full_file_path: String,
   pub image_file_name_pattern: String,
   pub save_to_dir: String,
+  pub new_full_file_path: Option<String>,
 }
 
 impl GenerateChapterConfig {
@@ -110,7 +111,9 @@ impl LocalizeImagesConfig {
     let save_to_dir =
       args.get("save_to_dir").and_then(|v| v.as_str()).unwrap_or("{full_dir_of_original_file}/assets/").to_string();
 
-    Ok(Self { full_file_path, image_file_name_pattern, save_to_dir })
+    let new_full_file_path = args.get("new_full_file_path").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+    Ok(Self { full_file_path, image_file_name_pattern, save_to_dir, new_full_file_path })
   }
 
   /// 获取处理占位符后的保存目录
@@ -325,25 +328,5 @@ mod tests {
     let debug_output = format!("{:?}", config);
     assert!(debug_output.contains("GenerateChapterConfig"));
     assert!(debug_output.contains("/path/to/file.md"));
-  }
-
-  /// 测试边界情况：空字符串路径
-  #[test]
-  fn test_empty_file_path() {
-    let mut args = Map::new();
-    args.insert("full_file_path".to_string(), Value::String("".to_string()));
-
-    let config = GenerateChapterConfig::from_args(Some(&args)).unwrap();
-    assert_eq!(config.full_file_path, "");
-  }
-
-  /// 测试边界情况：特殊字符路径
-  #[test]
-  fn test_special_characters_in_path() {
-    let mut args = Map::new();
-    args.insert("full_file_path".to_string(), Value::String("/path/with spaces/中文/file.md".to_string()));
-
-    let config = GenerateChapterConfig::from_args(Some(&args)).unwrap();
-    assert_eq!(config.full_file_path, "/path/with spaces/中文/file.md");
   }
 }

@@ -75,7 +75,6 @@ where
 mod tests {
   use super::*;
   use std::fs;
-  use std::path::Path;
   use tempfile::NamedTempFile;
 
   /// 测试验证有效的 Markdown 文件

@@ -18,7 +18,7 @@ impl MarkdownParser {
     let header_regex = Regex::new(r"^(#{1,6})\s+(.*)$").map_err(|e| format!("正则表达式错误: {}", e))?;
     let image_regex =
       Regex::new(r#"!\[([^\]]*)\]\(([^)]+?)(?:\s+"([^"]*)")?\)"#).map_err(|e| format!("图片正则表达式错误: {}", e))?;
-    let html_img_regex = Regex::new(r#"<img\s+([^>]*?)src\s*=\s*["']([^"']+)["']([^>]*?)/?>"#)
+    let html_img_regex = Regex::new(r#"<img\s*([^>]*?)src\s*=\s*["']([^"']+)["']([^>]*?)/?>"#)
       .map_err(|e| format!("HTML img 正则表达式错误: {}", e))?;
 
     Ok(Self { header_regex, image_regex, html_img_regex })
@@ -263,16 +263,6 @@ impl MarkdownParser {
       }
     }
     String::new()
-  }
-
-  /// 解析图片行（保留用于向后兼容）
-  fn parse_image_line(&self, line: &str, line_number: usize) -> Option<MSTNode> {
-    let images = self.parse_images_in_line(line, line_number);
-    if images.len() == 1 && line.trim() == images[0].raw_line.trim() {
-      images.into_iter().next()
-    } else {
-      None
-    }
   }
 }
 

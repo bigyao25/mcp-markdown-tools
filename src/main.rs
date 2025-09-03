@@ -208,6 +208,11 @@ impl ServerHandler for MarkdownTools {
                                 "type": "string",
                                 "description": "保存到的目录，默认为原文档同目录下的 assets 目录",
                                 "default": "{full_dir_of_original_file}/assets/"
+                            },
+                            "new_full_file_path": {
+                                "type": "string",
+                                "description": r#"新文件名，必须使用绝对路径。为空则覆盖原文件。"#,
+                                "default": "{full_dir_of_original_file}/{original_file_name}_local.md"
                             }
                         },
                         "required": ["full_file_path"]
