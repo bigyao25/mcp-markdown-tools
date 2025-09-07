@@ -62,6 +62,7 @@ Add the Docker-hosted MCP server to your LLM assistant application with the foll
 - Remove all numbering from headings in `/home/docs/lorem.md`
 - Add numbering to level 2 and below headings in `/home/docs/lorem.md`, save as `lorem-numed.md`
 - Please help me add Chinese numbering to the headings in `/home/docs/doc1-cn.md`, skip the first line, save as: `doc1-cn-numed.md`
+- Convert all images in `/home/docs/lorem.md` to local and save as `/home/docs/lorem_local.md`.
 
 ## Available Tools
 
@@ -96,9 +97,20 @@ Removes all numbering from heading lines in a Markdown document, including both 
 - save_as_new_file: Whether to save as a new file after editing; when false, the original file will be overwritten
 - new_full_file_path: New file name. Takes effect when save_as_new_file=true
 
+### localize_images
+
+Saves all remote image referenced in the Markdown document locally and update the document.
+
+#### Parameters
+
+- full_file_path: File path of the Markdown document
+- image_file_name_pattern: The file name format for the saved images
+- image_dir: The directory where the images are saved. Default is `./assets`.
+- new_full_file_path: The new file name. If left blank, the original file will be overwritten.
+
 ## TODO
 
-- Localize embedded remote images
+- ✅ Localize all the remote images of markdown doc
 - File comparison
 
 ## References

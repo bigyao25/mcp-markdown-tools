@@ -204,9 +204,9 @@ impl ServerHandler for MarkdownTools {
 - hash: 6位哈希字符",
                                 "default": "{multilevel_num}-{index}"
                             },
-                            "save_to_dir": {
+                            "image_dir": {
                                 "type": "string",
-                                "description": "保存到的目录，默认为原文档同目录下的 assets 目录",
+                                "description": "图片保存的目录，默认为原文档同目录下的 assets 目录",
                                 "default": "{full_dir_of_original_file}/assets/"
                             },
                             "new_full_file_path": {

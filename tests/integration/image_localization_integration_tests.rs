@@ -18,7 +18,7 @@ mod tests {
     let assets_dir = file_manager.assets_dir();
 
     let config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
 
@@ -55,7 +55,7 @@ mod tests {
     std::fs::write(&txt_file, "![图片](https://example.com/test.jpg)").unwrap();
 
     let config = ImageLocalizationConfigBuilder::new(txt_file.to_str().unwrap())
-      .save_to_dir(file_manager.assets_dir().to_str().unwrap())
+      .image_dir(file_manager.assets_dir().to_str().unwrap())
       .build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -80,7 +80,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{multilevel_num}-{index}".to_string(),
-      save_to_dir: "{full_dir_of_original_file}/assets/".to_string(),
+      image_dir: "{full_dir_of_original_file}/assets/".to_string(),
       new_full_file_path: None,
     };
 
@@ -109,7 +109,7 @@ mod tests {
 
     let config = ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap())
       .file_name_pattern("img_{index}_{hash}")
-      .save_to_dir(images_dir.to_str().unwrap())
+      .image_dir(images_dir.to_str().unwrap())
       .build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -133,7 +133,7 @@ mod tests {
     let assets_dir = file_manager.assets_dir();
 
     let config = ImageLocalizationConfigBuilder::new(original_file.to_str().unwrap())
-      .save_to_dir(assets_dir.to_str().unwrap())
+      .image_dir(assets_dir.to_str().unwrap())
       .new_file_path(Some(new_file_path.to_str().unwrap().to_string()))
       .build();
 
@@ -176,7 +176,7 @@ mod tests {
     let start_time = std::time::Instant::now();
 
     let config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
 
@@ -213,7 +213,7 @@ mod tests {
 
     for (invalid_path, description) in test_cases {
       let config = ImageLocalizationConfigBuilder::new(invalid_path)
-        .save_to_dir(file_manager.assets_dir().to_str().unwrap())
+        .image_dir(file_manager.assets_dir().to_str().unwrap())
         .build();
 
       let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -244,9 +244,8 @@ mod tests {
       let md_file = file_manager.create_md_file(&format!("concurrent_{}.md", i), test_data::DOC_WITHOUT_IMAGES);
       let assets_dir = file_manager.temp_dir.path().join(format!("assets_{}", i));
 
-      let config = ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap())
-        .save_to_dir(assets_dir.to_str().unwrap())
-        .build();
+      let config =
+        ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
       // 创建异步任务
       let task = tokio::spawn(async move { MarkdownToolsImpl::localize_images_impl(config).await });
@@ -291,7 +290,7 @@ mod mock_integration_tests {
     let assets_dir = file_manager.assets_dir();
 
     let config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
 
@@ -357,7 +356,7 @@ mod mock_integration_tests {
 
     // 然后测试本地化流程
     let config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let result = MarkdownToolsImpl::localize_images_impl(config).await;
 

@@ -27,7 +27,7 @@ pub struct CheckHeadingConfig {
 pub struct LocalizeImagesConfig {
   pub full_file_path: String,
   pub image_file_name_pattern: String,
-  pub save_to_dir: String,
+  pub image_dir: String,
   pub new_full_file_path: Option<String>,
 }
 
@@ -108,24 +108,24 @@ impl LocalizeImagesConfig {
     let image_file_name_pattern =
       args.get("image_file_name_pattern").and_then(|v| v.as_str()).unwrap_or("{multilevel_num}-{index}").to_string();
 
-    let save_to_dir =
-      args.get("save_to_dir").and_then(|v| v.as_str()).unwrap_or("{full_dir_of_original_file}/assets/").to_string();
+    let image_dir =
+      args.get("image_dir").and_then(|v| v.as_str()).unwrap_or("{full_dir_of_original_file}/assets/").to_string();
 
     let new_full_file_path = args.get("new_full_file_path").and_then(|v| v.as_str()).map(|s| s.to_string());
 
-    Ok(Self { full_file_path, image_file_name_pattern, save_to_dir, new_full_file_path })
+    Ok(Self { full_file_path, image_file_name_pattern, image_dir, new_full_file_path })
   }
 
   /// 获取处理占位符后的保存目录
   pub fn get_resolved_save_dir(&self) -> String {
     use std::path::Path;
 
-    if self.save_to_dir.contains("{full_dir_of_original_file}") {
+    if self.image_dir.contains("{full_dir_of_original_file}") {
       let path = Path::new(&self.full_file_path);
       let full_dir = path.parent().unwrap_or(Path::new(".")).to_str().unwrap_or(".");
-      self.save_to_dir.replace("{full_dir_of_original_file}", full_dir)
+      self.image_dir.replace("{full_dir_of_original_file}", full_dir)
     } else {
-      self.save_to_dir.clone()
+      self.image_dir.clone()
     }
   }
 }
@@ -251,13 +251,13 @@ mod tests {
     let mut args = Map::new();
     args.insert("full_file_path".to_string(), Value::String("/path/to/file.md".to_string()));
     args.insert("image_file_name_pattern".to_string(), Value::String("{index}-{hash}".to_string()));
-    args.insert("save_to_dir".to_string(), Value::String("/path/to/images/".to_string()));
+    args.insert("image_dir".to_string(), Value::String("/path/to/images/".to_string()));
 
     let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
 
     assert_eq!(config.full_file_path, "/path/to/file.md");
     assert_eq!(config.image_file_name_pattern, "{index}-{hash}");
-    assert_eq!(config.save_to_dir, "/path/to/images/");
+    assert_eq!(config.image_dir, "/path/to/images/");
   }
 
   /// 测试 LocalizeImagesConfig 的默认值
@@ -270,7 +270,7 @@ mod tests {
 
     assert_eq!(config.full_file_path, "/path/to/file.md");
     assert_eq!(config.image_file_name_pattern, "{multilevel_num}-{index}");
-    assert_eq!(config.save_to_dir, "{full_dir_of_original_file}/assets/");
+    assert_eq!(config.image_dir, "{full_dir_of_original_file}/assets/");
   }
 
   /// 测试 LocalizeImagesConfig 的 get_resolved_save_dir 方法
@@ -279,7 +279,7 @@ mod tests {
     // 测试包含占位符的情况
     let mut args = Map::new();
     args.insert("full_file_path".to_string(), Value::String("/home/user/docs/test.md".to_string()));
-    args.insert("save_to_dir".to_string(), Value::String("{full_dir_of_original_file}/assets/".to_string()));
+    args.insert("image_dir".to_string(), Value::String("{full_dir_of_original_file}/assets/".to_string()));
 
     let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
     let resolved_dir = config.get_resolved_save_dir();
@@ -292,7 +292,7 @@ mod tests {
   fn test_localize_images_config_get_resolved_save_dir_no_placeholder() {
     let mut args = Map::new();
     args.insert("full_file_path".to_string(), Value::String("/home/user/docs/test.md".to_string()));
-    args.insert("save_to_dir".to_string(), Value::String("/absolute/path/images/".to_string()));
+    args.insert("image_dir".to_string(), Value::String("/absolute/path/images/".to_string()));
 
     let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
     let resolved_dir = config.get_resolved_save_dir();
@@ -305,7 +305,7 @@ mod tests {
   fn test_localize_images_config_root_file() {
     let mut args = Map::new();
     args.insert("full_file_path".to_string(), Value::String("test.md".to_string()));
-    args.insert("save_to_dir".to_string(), Value::String("{full_dir_of_original_file}/assets/".to_string()));
+    args.insert("image_dir".to_string(), Value::String("{full_dir_of_original_file}/assets/".to_string()));
 
     let config = LocalizeImagesConfig::from_args(Some(&args)).unwrap();
     let resolved_dir = config.get_resolved_save_dir();

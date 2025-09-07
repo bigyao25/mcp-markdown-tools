@@ -80,7 +80,7 @@ let config = NumberingConfigBuilder::new(file_path)
 // 图片本地化配置
 let config = ImageLocalizationConfigBuilder::new(file_path)
     .file_name_pattern("img_{index}_{hash}")
-    .save_to_dir(assets_dir)
+    .image_dir(assets_dir)
     .build();
 ```
 

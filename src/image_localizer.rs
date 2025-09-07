@@ -283,7 +283,7 @@ mod tests {
     LocalizeImagesConfig {
       full_file_path: file_path.to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: save_dir.to_string(),
+      image_dir: save_dir.to_string(),
       new_full_file_path: None,
     }
   }
@@ -583,7 +583,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{multilevel_num}-{index}".to_string(),
-      save_to_dir: "{full_dir_of_original_file}/assets/".to_string(),
+      image_dir: "{full_dir_of_original_file}/assets/".to_string(),
       new_full_file_path: None,
     };
 

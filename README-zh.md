@@ -62,6 +62,7 @@
 - 清除 `/home/docs/lorem.md` 所有标题中的编号
 - 将 `/home/docs/lorem.md` 二级及其以下的标题添加编号，另存为 `lorem-numed.md`
 - 请帮我把 `/home/docs/doc1-cn.md` 的标题添加中文编号，首行不加，另存为：`doc1-cn-numed.md`
+- 将 `/home/docs/lorem.md` 中的图片全部转为本地，另存为 `/home/docs/lorem_local.md`。
 
 ## 可用的工具
 
@@ -96,10 +97,21 @@
 - save_as_new_file：编辑后，是否另存为新文件，为false时将覆盖原文件。
 - new_full_file_path：新文件名。save_as_new_file=true 时生效。
 
+### localize_images
+
+将整个 Markdown 文档中引用的远程图片资源保存到本地，并且更改文档中的引用。
+
+#### 参数
+
+- full_file_path：Markdown 文档的文件路径
+- image_file_name_pattern：保存到本地的图片文件名格式
+- image_dir：图片保存的目录，默认为原文档同目录下的 `assets` 目录
+- new_full_file_path：新文件名。为空则覆盖原文件。
+
 ## TODO
 
-- 内嵌远程图片本地化
-- 文件比较
+- ✅ 内嵌远程图片本地化
+- ⏳ 文件比较
 
 ## 参考
 

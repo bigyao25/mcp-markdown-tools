@@ -37,7 +37,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -62,7 +62,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: "/nonexistent/file.md".to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: "/tmp/assets/".to_string(),
+      image_dir: "/tmp/assets/".to_string(),
       new_full_file_path: None,
     };
 
@@ -85,7 +85,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: temp_file.path().to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: temp_dir.path().to_str().unwrap().to_string(),
+      image_dir: temp_dir.path().to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -136,7 +136,7 @@ mod tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -255,7 +255,7 @@ mod mock_tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -297,7 +297,7 @@ mod mock_tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{multilevel_num}-{index}".to_string(),
-      save_to_dir: "{full_dir_of_original_file}/assets/".to_string(),
+      image_dir: "{full_dir_of_original_file}/assets/".to_string(),
       new_full_file_path: None,
     };
 
@@ -341,7 +341,7 @@ mod mock_tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -412,7 +412,7 @@ mod mock_tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -495,7 +495,7 @@ mod mock_tests {
     let localization_config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "{index}-{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 
@@ -546,7 +546,7 @@ mod mock_tests {
     let config = LocalizeImagesConfig {
       full_file_path: md_file.to_str().unwrap().to_string(),
       image_file_name_pattern: "img_{index}_{hash}".to_string(),
-      save_to_dir: assets_dir.to_str().unwrap().to_string(),
+      image_dir: assets_dir.to_str().unwrap().to_string(),
       new_full_file_path: None,
     };
 

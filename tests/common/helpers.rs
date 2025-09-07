@@ -93,7 +93,7 @@ impl ImageLocalizationConfigBuilder {
       config: LocalizeImagesConfig {
         full_file_path: file_path.to_string(),
         image_file_name_pattern: "{index}-{hash}".to_string(),
-        save_to_dir: "./assets/".to_string(),
+        image_dir: "./assets/".to_string(),
         new_full_file_path: None,
       },
     }
@@ -104,8 +104,8 @@ impl ImageLocalizationConfigBuilder {
     self
   }
 
-  pub fn save_to_dir(mut self, dir: &str) -> Self {
-    self.config.save_to_dir = dir.to_string();
+  pub fn image_dir(mut self, dir: &str) -> Self {
+    self.config.image_dir = dir.to_string();
     self
   }
 

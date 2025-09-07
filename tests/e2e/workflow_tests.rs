@@ -30,7 +30,7 @@ mod tests {
 
     // 第二步：本地化图片（虽然这个文档没有图片）
     let localization_config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let localization_result = MarkdownToolsImpl::localize_images_impl(localization_config).await;
     assert!(localization_result.is_ok());
@@ -232,7 +232,7 @@ mod tests {
     let assets_dir = file_manager.assets_dir();
     for file_path in &file_paths {
       let config = ImageLocalizationConfigBuilder::new(file_path.to_str().unwrap())
-        .save_to_dir(assets_dir.to_str().unwrap())
+        .image_dir(assets_dir.to_str().unwrap())
         .build();
 
       let result = MarkdownToolsImpl::localize_images_impl(config).await;
@@ -304,7 +304,7 @@ mod tests {
 
     // 验证系统在错误后仍能正常工作
     let valid_img_config = ImageLocalizationConfigBuilder::new(valid_file.to_str().unwrap())
-      .save_to_dir(file_manager.assets_dir().to_str().unwrap())
+      .image_dir(file_manager.assets_dir().to_str().unwrap())
       .build();
 
     let valid_img_result = MarkdownToolsImpl::localize_images_impl(valid_img_config).await;
@@ -343,7 +343,7 @@ mod tests {
 
     // 第二步：本地化图片
     let localization_config = ImageLocalizationConfigBuilder::new(large_file.to_str().unwrap())
-      .save_to_dir(file_manager.assets_dir().to_str().unwrap())
+      .image_dir(file_manager.assets_dir().to_str().unwrap())
       .build();
 
     let localization_result = MarkdownToolsImpl::localize_images_impl(localization_config).await;
@@ -434,7 +434,7 @@ mod mock_e2e_tests {
 
     // 第二步：本地化图片
     let localization_config =
-      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).save_to_dir(assets_dir.to_str().unwrap()).build();
+      ImageLocalizationConfigBuilder::new(md_file.to_str().unwrap()).image_dir(assets_dir.to_str().unwrap()).build();
 
     let localization_result = MarkdownToolsImpl::localize_images_impl(localization_config).await;
 
