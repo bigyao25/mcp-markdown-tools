@@ -52,13 +52,15 @@ pub struct MSTNode {
   /// 标题文本（移除了编号，仅对 Header 节点有效）
   pub title: Option<String>,
   /// 原始行内容
-  pub raw_line: String,
+  pub raw: String,
   /// 行号（从1开始）
   pub line_number: usize,
-  /// 子节点
-  pub children: Vec<MSTNode>,
-  /// 编号信息（处理后填充）
+  /// 编号信息
   pub numbering: Option<NumberingInfo>,
+  /// 子节点。
+  /// 标题行节点的子节点为其下级所有的章节节点。
+  /// 文本节点的子节点为该文本行内的所有子元素，若该行是纯文本则子节点为空。
+  pub children: Vec<MSTNode>,
 }
 
 /// 编号信息
@@ -93,7 +95,7 @@ impl MSTNode {
     Self {
       node_type: NodeType::Root,
       title: None,
-      raw_line: String::new(),
+      raw: String::new(),
       line_number: 0,
       children: Vec::new(),
       numbering: None,
@@ -101,11 +103,11 @@ impl MSTNode {
   }
 
   /// 创建标题节点
-  pub fn new_header(level: usize, title: String, raw_line: String, line_number: usize) -> Self {
+  pub fn new_header(level: usize, title: String, raw: String, line_number: usize) -> Self {
     Self {
       node_type: NodeType::Header(level),
       title: Some(title),
-      raw_line,
+      raw,
       line_number,
       children: Vec::new(),
       numbering: None,
@@ -117,7 +119,7 @@ impl MSTNode {
     Self {
       node_type: NodeType::Content(content.clone()),
       title: None,
-      raw_line: content,
+      raw: content,
       line_number,
       children: Vec::new(),
       numbering: None,
@@ -125,11 +127,11 @@ impl MSTNode {
   }
 
   /// 创建图片节点
-  pub fn new_image(image_info: ImageInfo, raw_line: String, line_number: usize) -> Self {
+  pub fn new_image(image_info: ImageInfo, raw: String, line_number: usize) -> Self {
     Self {
       node_type: NodeType::Image(image_info),
       title: None,
-      raw_line,
+      raw,
       line_number,
       children: Vec::new(),
       numbering: None,

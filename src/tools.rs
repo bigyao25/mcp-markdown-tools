@@ -131,11 +131,11 @@ impl MarkdownToolsImpl {
 
     for (_i, header) in headers.iter().enumerate() {
       let line_number = header.line_number;
-      let raw_line = &header.raw_line;
+      let raw = &header.raw;
       let current_level = header.header_level().unwrap();
 
       // 验证格式
-      if let Err(format_error) = Self::validate_heading_format(raw_line, current_level, line_number) {
+      if let Err(format_error) = Self::validate_heading_format(raw, current_level, line_number) {
         errors.push(format_error);
         continue;
       }
@@ -189,21 +189,21 @@ impl MarkdownToolsImpl {
   }
 
   /// 验证单个标题的格式
-  fn validate_heading_format(raw_line: &str, expected_level: usize, line_number: usize) -> Result<(), String> {
+  fn validate_heading_format(raw: &str, expected_level: usize, line_number: usize) -> Result<(), String> {
     // 检查是否以正确数量的#开头
     let expected_prefix = "#".repeat(expected_level);
 
-    if !raw_line.starts_with(&expected_prefix) {
+    if !raw.starts_with(&expected_prefix) {
       return Err(format!("第{}行：标题格式错误，应该以 {} 开头", line_number, expected_prefix));
     }
 
     // 检查#前面是否有空格
-    if raw_line.chars().next() != Some('#') {
+    if raw.chars().next() != Some('#') {
       return Err(format!("第{}行：标题格式错误，# 符号前不能有空格或其他字符", line_number));
     }
 
     // 检查#后面是否有且仅有一个空格
-    let after_hashes = &raw_line[expected_level..];
+    let after_hashes = &raw[expected_level..];
     if !after_hashes.starts_with(' ') {
       return Err(format!("第{}行：标题格式错误，{} 后面必须有一个空格", line_number, expected_prefix));
     }

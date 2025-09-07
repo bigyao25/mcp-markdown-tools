@@ -52,7 +52,7 @@ impl MarkdownParser {
       let image_nodes = self.parse_images_in_line(line, line_number);
       if !image_nodes.is_empty() {
         // 如果整行只有一个图片且没有其他内容，作为独立图片节点
-        if image_nodes.len() == 1 && line.trim() == image_nodes[0].raw_line.trim() {
+        if image_nodes.len() == 1 && line.trim() == image_nodes[0].raw.trim() {
           if let Some((_, parent_index)) = header_stack.last() {
             self.add_content_to_node(&mut root, *parent_index, image_nodes.into_iter().next().unwrap());
           } else {
@@ -361,7 +361,7 @@ mod tests {
     let headers = mst.get_headers();
 
     assert_eq!(headers.len(), 0);
-    assert!(mst.children.len() > 0); // 应该有内容节点
+    assert_eq!(mst.children.len(), 4); // 应该有内容节点
   }
 
   #[test]

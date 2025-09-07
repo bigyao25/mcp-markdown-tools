@@ -303,7 +303,7 @@ mod tests {
       node_type: NodeType::Image(image_info),
       title: None,
 
-      raw_line: format!("![{}]({})", alt_text, url),
+      raw: format!("![{}]({})", alt_text, url),
       line_number: 1,
       children: Vec::new(),
       numbering: None,
@@ -321,7 +321,7 @@ mod tests {
       html_attributes: attributes,
     };
 
-    let raw_line = if let Some(attrs) = &image_info.html_attributes {
+    let raw = if let Some(attrs) = &image_info.html_attributes {
       format!("<img {} src=\"{}\" alt=\"{}\">", attrs, url, alt_text)
     } else {
       format!("<img src=\"{}\" alt=\"{}\">", url, alt_text)
@@ -331,7 +331,7 @@ mod tests {
       node_type: NodeType::Image(image_info),
       title: None,
 
-      raw_line,
+      raw,
       line_number: 1,
       children: Vec::new(),
       numbering: None,
